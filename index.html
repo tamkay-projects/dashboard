@@ -89,7 +89,7 @@ body.fmt .fmt-btn{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .title-in:hover{border-bottom-color:var(--line)}
 .title-in:focus{outline:none;border-bottom-color:var(--clay)}
 .sep{width:1px;height:22px;background:var(--line);margin:0 6px}
-.editor{min-height:320px;font-family:Fraunces,Georgia,serif;font-size:18px;line-height:1.75;padding:4px 0 8px;outline:none}
+.editor{min-height:320px;font-family:'DM Sans',system-ui,sans-serif;font-size:16.5px;line-height:1.7;padding:4px 0 8px;outline:none}
 .editor:empty:before{content:attr(data-ph);color:var(--muted)}
 .editor h2{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:600;margin:22px 0 8px}
 .editor h3{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:600;margin:18px 0 6px}
@@ -106,8 +106,29 @@ body.fmt .fmt-btn{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .pin:after{content:"";position:absolute;left:50%;top:-6px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--pin,#A65A3C)}
 .pin img{display:block;width:100%;object-fit:cover}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-size:14px;z-index:20;box-shadow:var(--shadow)}
-.flip{position:relative;width:26px;height:36px;border-radius:5px;background:var(--ink);color:var(--bg);font-family:Fraunces,serif;font-size:23px;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.flip:after{content:"";position:absolute;left:0;right:0;top:17px;height:1px;background:var(--bg);opacity:.2}
+.fclock{display:flex;align-items:center;gap:10px;--tw:78px;--th:112px;--fs:84px}
+.tile{position:relative;width:var(--tw);height:var(--th);border-radius:12px;perspective:420px;box-shadow:0 10px 22px rgba(36,31,26,.18),0 2px 4px rgba(36,31,26,.12)}
+.tile .h{position:absolute;inset:0;border-radius:12px;font-family:Fraunces,Georgia,serif;font-size:var(--fs);text-align:center;line-height:var(--th);background:var(--tile);color:var(--tileInk);backface-visibility:hidden}
+.tile .t{clip-path:inset(0 0 50% 0)}.tile .b{clip-path:inset(50% 0 0 0);background:var(--tileLow)}
+.tile .ft{transform-origin:50% 50%;z-index:2}.tile .fb{transform-origin:50% 50%;z-index:2}
+.tile.go .ft{animation:ftop .6s cubic-bezier(.4,0,.6,1) both}.tile.go .fb{animation:fbot .6s cubic-bezier(.4,0,.6,1) both}
+.tile:after{content:"";position:absolute;left:0;right:0;top:calc(50% - .5px);height:1px;background:var(--bg);opacity:.35;z-index:3}
+.tile i{position:absolute;top:calc(50% - 6px);width:5px;height:12px;border-radius:2px;background:var(--pin);z-index:4}.tile i.l{left:-2px}.tile i.r{right:-2px}
+@keyframes ftop{0%{transform:rotateX(0)}50%,100%{transform:rotateX(-90deg)}}
+@keyframes fbot{0%,50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+.fcolon{display:flex;flex-direction:column;gap:18px;padding:0 4px;animation:blink 2s ease-in-out infinite}.fcolon span{width:10px;height:10px;border-radius:50%;background:#C98A3A}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+:root{--tile:#2B2520;--tileLow:#241F1A;--tileInk:#F6EEE2;--pin:#5A4E42}
+body.dark{--tile:#F3EADC;--tileLow:#E8DDCB;--tileInk:#17130F;--pin:#6A5E52}
+.hero{border-radius:28px;padding:clamp(28px,3.5vw,48px) clamp(24px,4vw,56px);background:var(--hbg);color:var(--hink);transition:background-color .6s,color .6s}
+.hero .hsub{color:var(--hsub)}.hero .hacc{color:var(--hacc)}
+.sky-m{--hbg:#F1DCCB;--hink:#2B1F18;--hsub:#7A3E24;--hacc:#A65A3C}
+.sky-a{--hbg:#ECE3D0;--hink:#241F1A;--hsub:#5E5A3E;--hacc:#4E5C33}
+.sky-e,body.dark .hero{--hbg:#2A221C;--hink:#F3EADC;--hsub:#B9A894;--hacc:#E0A866;--tile:#F3EADC;--tileLow:#E6D9C6;--tileInk:#2A221C;--pin:#7A6A5A}
+.sky-e .tile:after,body.dark .hero .tile:after{background:#2A221C}
+.hero .tile:after{background:var(--hbg)}
+@media (max-width:700px){.fclock{--tw:54px;--th:78px;--fs:58px;gap:6px}.fcolon{gap:12px}.fcolon span{width:7px;height:7px}}
+@media (prefers-reduced-motion:reduce){.tile.go .ft,.tile.go .fb,.fcolon{animation:none}}
 .modal-bg{position:fixed;inset:0;background:rgba(20,16,12,.5);display:flex;align-items:center;justify-content:center;z-index:30;padding:20px}
 .modal{background:var(--card);border-radius:20px;padding:24px;width:min(520px,100%);max-height:90vh;overflow:auto}
 label.f{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
@@ -230,19 +251,25 @@ function nav(r){
   '<button class="icon-btn press" data-act="theme" aria-label="'+(ui.dark?'Switch to light mode':'Switch to dark mode')+'">'+(ui.dark?I.sun:I.moon)+'</button></div></nav>';
 }
 
-function clockHtml(){var n=new Date(),h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0');return '<span class="flip">'+h[0]+'</span><span class="flip">'+h[1]+'</span><span class="serif" style="font-size:20px;color:var(--gold);padding:0 1px">:</span><span class="flip">'+m[0]+'</span><span class="flip">'+m[1]+'</span>'}
+function clockDigits(){var n=new Date();return (String(n.getHours()).padStart(2,'0')+String(n.getMinutes()).padStart(2,'0')).split('')}
+function tileHtml(d){return '<span class="tile" data-d="'+d+'"><span class="h t">'+d+'</span><span class="h b">'+d+'</span><span class="h t ft">'+d+'</span><span class="h b fb">'+d+'</span><i class="l"></i><i class="r"></i></span>'}
+function clockHtml(){var d=clockDigits();return tileHtml(d[0])+tileHtml(d[1])+'<span class="fcolon" aria-hidden="true"><span></span><span></span></span>'+tileHtml(d[2])+tileHtml(d[3])}
+var clockDay=new Date().getDate();
+function tickClock(){var c=document.getElementById('clk');if(!c)return;var d=clockDigits(),ts=c.querySelectorAll('.tile');c.setAttribute('aria-label','Current time '+d[0]+d[1]+':'+d[2]+d[3]);
+  ts.forEach(function(t,i){var old=t.dataset.d,nw=d[i];if(old===nw)return;t.dataset.d=nw;var q=t.querySelectorAll('.h');q[0].textContent=nw;q[1].textContent=old;q[2].textContent=old;q[3].textContent=nw;t.classList.remove('go');void t.offsetWidth;t.classList.add('go')});
+  var hr=document.getElementById('hero');if(hr&&!hr.classList.contains('sky-'+skyPart())){if(!editing())render()}
+  if(new Date().getDate()!==clockDay){clockDay=new Date().getDate();if(!editing())render()}}
+function skyPart(){var h=new Date().getHours();return h>=5&&h<12?'m':h>=12&&h<18?'a':'e'}
 function greeting(){var h=new Date().getHours();return h<12?'Good morning':h<18?'Good afternoon':'Good evening'}
 
 function viewHome(){
   var n=new Date(),nt=upcomingTrips()[0],nm=nextModule(),p=program();
   var sub=[];if(nt&&nt.start){var dd=daysBetween(today(),nt.start);sub.push(dd>0?esc(nt.name)+' in '+dd+' day'+(dd===1?'':'s')+'.':esc(nt.name)+' is on now.')}if(nm)sub.push(esc(nm.m.title||'Next module')+' is next.');
   var h='<main class="page"><div class="wrap">'+
-  '<header class="fade row" style="flex-wrap:wrap;gap:28px;margin-bottom:32px">'+
-   '<div class="row" style="gap:0;border-radius:20px;overflow:hidden;background:var(--card);border:1px solid var(--line);align-items:stretch">'+
-    '<div style="background:var(--dateBg);color:var(--dateInk);padding:14px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:96px"><span style="font-size:13px;font-weight:600;letter-spacing:.5px">'+n.toLocaleDateString('en-GB',{month:'short'}).toUpperCase()+'</span><span class="serif" style="font-weight:300;font-size:64px;line-height:.95">'+n.getDate()+'</span></div>'+
-    '<div style="padding:14px 20px;display:flex;flex-direction:column;justify-content:center;gap:8px"><span class="serif" style="font-style:italic;font-size:24px">'+n.toLocaleDateString('en-GB',{weekday:'long'})+'</span><span id="clk" class="row" style="gap:3px" aria-label="Current time">'+clockHtml()+'</span></div>'+
-   '</div>'+
-   '<div style="flex:1 1 320px;min-width:0"><h1 class="serif" style="font-weight:400;font-size:clamp(36px,5vw,52px);line-height:1;letter-spacing:-1px;margin-bottom:8px">'+greeting()+', Tamara</h1><p class="muted" style="margin:0;font-size:16px">'+(sub.join(' ')||'Nothing urgent. Enjoy it.')+'</p></div>'+
+  '<header id="hero" class="fade row between hero sky-'+skyPart()+'" style="flex-wrap:wrap;gap:32px;margin-bottom:28px;align-items:center">'+
+   '<div style="flex:1 1 420px;min-width:0"><p class="hsub" style="margin:0 0 14px;font-size:22px"><span class="serif hacc" style="font-style:italic;font-size:34px">'+n.toLocaleDateString('en-GB',{weekday:'long'})+'</span>, '+n.getDate()+' '+n.toLocaleDateString('en-GB',{month:'long'})+'</p>'+
+   '<h1 class="serif" style="font-weight:400;font-size:clamp(42px,5.5vw,72px);line-height:1.02;letter-spacing:-.5px;margin-bottom:14px">'+greeting()+', Tamara</h1><p class="hsub" style="margin:0;font-size:19px">'+(sub.join(' ')||'Nothing urgent. Enjoy it.')+'</p></div>'+
+   '<div id="clk" class="fclock" role="img" aria-label="Current time">'+clockHtml()+'</div>'+
   '</header><div class="grid12">';
   // next trip
   if(nt){var dd=nt.start?daysBetween(today(),nt.start):null,days=tripDays(nt),planned=days.filter(function(d){return d.items&&d.items.length}).length,bk=(nt.bookings||[]).length,pk=nt.packing||[],pd=pk.filter(function(x){return x.done}).length;
@@ -595,7 +622,7 @@ function boot(){
   sb.auth.getSession().then(function(r){var s0=r.data&&r.data.session;if(s0){user=s0.user;start()}else loginView()});
 }
 
-setInterval(function(){var c=document.getElementById('clk');if(c)c.innerHTML=clockHtml()},15000);
+setInterval(tickClock,1000);
 boot();
 })();
 </script>
