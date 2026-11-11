@@ -19,12 +19,12 @@ button{cursor:pointer}
 h1,h2,h3{margin:0;font-weight:500}
 .serif{font-family:Fraunces,Georgia,serif}
 .muted{color:var(--muted)}
-.wrap{max-width:1180px;margin:0 auto;padding:0 32px}
+.wrap{max-width:1600px;margin:0 auto;padding:0 clamp(20px,4vw,72px)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;transition:background-color .35s,border-color .35s}
 .h2{font-family:Fraunces,serif;font-weight:500;font-size:26px}
 .row{display:flex;align-items:center;gap:10px}
 .between{justify-content:space-between}
-.grid12{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:22px}
+.grid12{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:clamp(18px,1.6vw,28px)}
 .s4{grid-column:span 4}.s5{grid-column:span 5}.s7{grid-column:span 7}.s8{grid-column:span 8}.s12{grid-column:span 12}
 .btn{height:42px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:14px;font-weight:500;transition:transform .12s,background-color .2s}
 .btn:active,.press:active{transform:scale(.96)}
@@ -101,6 +101,7 @@ main.page{padding:32px 0 80px}
 label.f{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
 .tm{max-width:480px;margin:0 auto}
 @media (max-width:900px){.s4,.s5,.s7,.s8{grid-column:span 12}.wrap{padding:0 18px}.hide-sm{display:none}}
+@media (min-width:1400px){.card{padding:30px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
