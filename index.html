@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tamara's dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F6F0E6;--card:#FFFFFF;--soft:#FBF7F0;--soft2:#F1E8D8;--line:#ECE2D1;--ink:#241F1A;--muted:#6A5E52;--sel:#F3EADC;--dateBg:#F1DCCB;--dateInk:#7A3E24;--clay:#A65A3C;--olive:#6B7A4B;--sea:#2E5A73;--gold:#C98A3A;--callout:#EEF1E6;--hl:#F8E3BE;--shadow:0 10px 24px rgba(36,31,26,.12)}
+body.dark{--bg:#17130F;--card:#211B16;--soft:#2A231D;--soft2:#3A3129;--line:#352C25;--ink:#F3EADC;--muted:#B3A594;--sel:#2E2620;--dateBg:#3A2A22;--dateInk:#F1DCCB;--callout:#2A2A20;--hl:#5A4422;--shadow:0 10px 24px rgba(0,0,0,.35)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;transition:background-color .35s,color .35s}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3{margin:0;font-weight:500}
+.serif{font-family:Fraunces,Georgia,serif}
+.muted{color:var(--muted)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 32px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;transition:background-color .35s,border-color .35s}
+.h2{font-family:Fraunces,serif;font-weight:500;font-size:26px}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.grid12{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:22px}
+.s4{grid-column:span 4}.s5{grid-column:span 5}.s7{grid-column:span 7}.s8{grid-column:span 8}.s12{grid-column:span 12}
+.btn{height:42px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:14px;font-weight:500;transition:transform .12s,background-color .2s}
+.btn:active,.press:active{transform:scale(.96)}
+.btn.dark{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.sm{height:34px;padding:0 13px;font-size:13px}
+.btn.ghost{border-color:transparent}
+.icon-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:inline-flex;align-items:center;justify-content:center}
+.pill{font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.p-olive{background:#E8ECDD;color:#3D4A26}.p-gold{background:#F8EBD3;color:#6E4B12}.p-sea{background:#E3EDF2;color:#1C3B4D}.p-clay{background:#F3E1D5;color:#7A3E24}.p-grey{background:#EFE6D6;color:#5A4E42}
+.input{height:42px;border-radius:12px;border:1px solid var(--line);background:var(--soft);padding:0 14px;width:100%;min-width:0}
+textarea.input{height:auto;padding:10px 14px;resize:vertical}
+.input:focus,.editor:focus{outline:2px solid var(--clay);outline-offset:1px}
+button:focus-visible,a:focus-visible{outline:2px solid var(--clay);outline-offset:2px}
+.lift{transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s}
+.lift:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.zoom img{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.zoom:hover img{transform:scale(1.05)}
+.fade{animation:fade .4s ease both}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.bar{height:8px;border-radius:4px;background:var(--soft2);overflow:hidden}
+.bar>span{display:block;height:100%;border-radius:4px;background:var(--olive);transition:width .4s}
+nav.top{border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5;transition:background-color .35s}
+nav.top .wrap{display:flex;align-items:center;gap:6px;min-height:64px;flex-wrap:wrap}
+nav.top a.tab{padding:8px 14px;border-radius:999px;text-decoration:none;font-size:14px}
+nav.top a.tab.on{background:var(--ink);color:var(--bg);font-weight:500}
+.brand{font-family:Fraunces,serif;font-size:22px;margin-right:20px;text-decoration:none}
+.save{font-size:13px;color:var(--muted);margin-left:auto;min-width:70px;text-align:right}
+main.page{padding:32px 0 80px}
+.check{display:flex;gap:12px;align-items:center;text-align:left;padding:11px 12px;border-radius:12px;border:none;background:var(--soft);width:100%}
+.box{width:20px;height:20px;flex:none;border-radius:6px;border:1.5px solid var(--muted);display:flex;align-items:center;justify-content:center;transition:background-color .2s,border-color .2s}
+.box.on{background:var(--clay);border-color:var(--clay)}
+.done-text{text-decoration:line-through;opacity:.5}
+.x{border:none;background:transparent;color:var(--muted);width:30px;height:30px;border-radius:8px;flex:none}
+.x:hover{background:var(--soft2)}
+.photo-card{position:relative;display:block;border-radius:16px;overflow:hidden;text-decoration:none;color:#FFF6EC;background:#241F1A;border:none;padding:0;width:100%;text-align:left}
+.photo-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.85}
+.photo-card .shade{position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(20,16,12,.78))}
+.photo-card .cap{position:absolute;left:14px;right:14px;bottom:12px}
+.empty{border:1.5px dashed var(--line);border-radius:16px;padding:28px;text-align:center;color:var(--muted)}
+.tabs{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--soft2);flex-wrap:wrap}
+.tabs button{height:36px;padding:0 16px;border-radius:999px;border:none;background:transparent;font-size:14px;font-weight:500}
+.tabs button.on{background:var(--card)}
+.side-item{display:flex;gap:12px;align-items:center;text-align:left;padding:10px;border-radius:16px;border:1px solid transparent;background:transparent;width:100%}
+.side-item.on{background:var(--card);border-color:var(--line)}
+.mod{display:flex;gap:12px;align-items:center;text-align:left;padding:10px 12px;border-radius:12px;border:none;background:transparent;width:100%}
+.mod.on{background:var(--sel);font-weight:600}
+.tool{min-width:36px;height:36px;padding:0 8px;border:none;border-radius:9px;background:transparent;display:inline-flex;align-items:center;justify-content:center}
+.tool:hover{background:var(--soft2)}
+.swatch{width:22px;height:22px;border-radius:50%;border:2px solid var(--card);outline:1px solid var(--line);padding:0;margin:0 2px}
+.swatch.sq{border-radius:6px}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:6px;border-radius:14px;background:var(--card);border:1px solid var(--line);position:sticky;top:72px;z-index:3;box-shadow:0 6px 18px rgba(36,31,26,.08)}
+.sep{width:1px;height:22px;background:var(--line);margin:0 6px}
+.editor{min-height:320px;font-family:Fraunces,Georgia,serif;font-size:18px;line-height:1.75;padding:8px 2px;outline:none}
+.editor:empty:before{content:attr(data-ph);color:var(--muted)}
+.editor h2{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:600;margin:22px 0 8px}
+.editor h3{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:600;margin:18px 0 6px}
+.editor p{margin:0 0 12px}
+.editor img{max-width:100%;border-radius:12px;display:block;margin:12px 0}
+.editor .callout{background:var(--callout);border-radius:12px;padding:14px 16px;margin:12px 0;font-family:'DM Sans',sans-serif;font-size:15px}
+.editor ul.checklist{list-style:none;padding-left:0}
+.editor ul.checklist li{position:relative;padding-left:30px;font-family:'DM Sans',sans-serif;font-size:16px;margin:6px 0}
+.editor ul.checklist li:before{content:"";position:absolute;left:0;top:4px;width:18px;height:18px;border-radius:5px;border:1.5px solid var(--muted);cursor:pointer}
+.editor ul.checklist li[data-checked="true"]{text-decoration:line-through;opacity:.55}
+.editor ul.checklist li[data-checked="true"]:before{background:var(--olive);border-color:var(--olive)}
+.editor a{color:var(--sea)}
+.pin{position:absolute;padding:7px 7px 20px;background:#fff}
+.pin:after{content:"";position:absolute;left:50%;top:-6px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--pin,#A65A3C)}
+.pin img{display:block;width:100%;object-fit:cover}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-size:14px;z-index:20;box-shadow:var(--shadow)}
+.flip{position:relative;width:26px;height:36px;border-radius:5px;background:var(--ink);color:var(--bg);font-family:Fraunces,serif;font-size:23px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.flip:after{content:"";position:absolute;left:0;right:0;top:17px;height:1px;background:var(--bg);opacity:.2}
+.modal-bg{position:fixed;inset:0;background:rgba(20,16,12,.5);display:flex;align-items:center;justify-content:center;z-index:30;padding:20px}
+.modal{background:var(--card);border-radius:20px;padding:24px;width:min(520px,100%);max-height:90vh;overflow:auto}
+label.f{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+.tm{max-width:480px;margin:0 auto}
+@media (max-width:900px){.s4,.s5,.s7,.s8{grid-column:span 12}.wrap{padding:0 18px}.hide-sm{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app"><div class="wrap" style="padding-top:80px"><p class="muted">Loading your dashboard…</p></div></div>
+<input type="file" id="importPick" accept="application/json" hidden>
+<input type="file" id="filePick" hidden>
+<script>
+(function(){
+'use strict';
+var S={settings:{},todos:[],courses:[],modules:[],trips:[],topics:[]};
+var SB_URL='https://mtoxdstdgubeqbcsggrs.supabase.co',SB_KEY='sb_publishable_OGAJCWEyVOaq3LCNAGx_cQ_gi8NHu8b';
+var sb=null,user=null,offline=false,loaded={};var signed={},signing={};
+var ui={};try{ui=JSON.parse(localStorage.getItem('dash-ui')||'{}')}catch(e){}
+function saveUi(){try{localStorage.setItem('dash-ui',JSON.stringify(ui))}catch(e){}}
+if(ui.dark)document.body.classList.add('dark');
+var app=document.getElementById('app');
+
+/* ---------- helpers ---------- */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function today(){var d=new Date();return ymd(d)}
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function parse(s){if(!s)return null;var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function daysBetween(a,b){return Math.round((parse(b)-parse(a))/86400000)}
+function addDays(s,n){var d=parse(s);d.setDate(d.getDate()+n);return ymd(d)}
+function fmtDate(s,o){var d=parse(s);return d?d.toLocaleDateString('en-GB',o||{day:'numeric',month:'short'}):''}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function byOrder(a,b){return (a.order||0)-(b.order||0)}
+function toast(msg){var t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove()},3200)}
+function rs(u){u=u||'';if(u.indexOf('sb:')===0){if(signed[u])return signed[u];signUrls([u]);return ''}return u}
+function img(src,alt,style){var u=rs(src);return u?'<img src="'+esc(u)+'" alt="'+esc(alt||'')+'"'+(style?' style="'+style+'"':'')+'>':''}
+function signUrls(list){list=list.filter(function(u){return u&&!signed[u]&&!signing[u]});if(!list.length||!sb)return;list.forEach(function(u){signing[u]=1});sb.storage.from('photos').createSignedUrls(list.map(function(u){return u.slice(3)}),604800).then(function(r){(r.data||[]).forEach(function(d,i){if(d.signedUrl)signed[list[i]]=d.signedUrl;delete signing[list[i]]});softRender()})}
+function scanRefs(){var m=JSON.stringify(S).match(/sb:[A-Za-z0-9_\-\/\.]+/g)||[];signUrls(m.filter(function(v,i,a){return a.indexOf(v)===i}))}
+function safeLink(u){return rs(safeUrl(u))}
+function mapsUrl(q){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q)}
+function safeUrl(u){u=String(u||'').trim();if(!u)return '';if(!/^https?:\/\//i.test(u)&&!/^(sb:|img\/)/.test(u))u='https://'+u;return u}
+
+/* ---------- sanitizer for rich text ---------- */
+var OK_TAGS={P:1,BR:1,B:1,STRONG:1,I:1,EM:1,U:1,H2:1,H3:1,UL:1,OL:1,LI:1,BLOCKQUOTE:1,SPAN:1,FONT:1,DIV:1,IMG:1,A:1,HR:1};
+function sanitize(html){
+  var doc=new DOMParser().parseFromString('<div>'+(html||'')+'</div>','text/html');var root=doc.body.firstChild;
+  (function walk(n){Array.prototype.slice.call(n.childNodes).forEach(function(c){
+    if(c.nodeType===3)return;
+    if(c.nodeType!==1||!OK_TAGS[c.tagName]){if(c.nodeType===1&&c.tagName!=='SCRIPT'&&c.tagName!=='STYLE'){walk(c);while(c.firstChild)n.insertBefore(c.firstChild,c)}c.remove();return}
+    Array.prototype.slice.call(c.attributes).forEach(function(a){
+      var k=a.name.toLowerCase(),v=a.value;
+      if(k==='style'){var keep=[];v.split(';').forEach(function(d){var p=d.split(':');var key=(p[0]||'').trim().toLowerCase();if((key==='color'||key==='background-color')&&p[1]&&!/url|expression/i.test(p[1]))keep.push(key+':'+p[1].trim())});keep.length?c.setAttribute('style',keep.join(';')):c.removeAttribute('style')}
+      else if(k==='href'){if(!/^https?:\/\//i.test(v))c.removeAttribute('href');else{c.setAttribute('target','_blank');c.setAttribute('rel','noopener')}}
+      else if(k==='src'){if(!/^(sb:|img\/|https:\/\/)/.test(v))c.removeAttribute('src')}
+      else if(k==='data-sb'){if(!/^sb:/.test(v))c.removeAttribute('data-sb')}
+      else if(k==='class'){if(!/^(checklist|callout)$/.test(v))c.removeAttribute('class')}
+      else if(k==='data-checked'||k==='color'||k==='alt'||k==='target'||k==='rel'){}
+      else c.removeAttribute(a.name);
+    });walk(c);})})(root);
+  return root.innerHTML;
+}
+
+/* ---------- writes (one at a time per document) ---------- */
+var queue={},pending=0;
+function setSave(state){var el=document.getElementById('saveState');if(el)el.textContent=state}
+function write(col,id,data,create){
+  var path=col+'/'+id;pending++;pendingPath[path]=(pendingPath[path]||0)+1;setSave('Saving…');
+  var run=function(){var it=col==='settings'?S.settings:find(col,id);if(!it)return Promise.resolve();var body=Object.assign({},it);delete body.id;return sb.from('docs').upsert({user_id:user.id,col:col,id:id,data:body,updated_at:new Date().toISOString()}).then(function(r){if(r.error)throw r.error})};
+  queue[path]=(queue[path]||Promise.resolve()).then(run).then(function(){},function(e){
+    return new Promise(function(r){setTimeout(r,1200+Math.random()*800)}).then(run).catch(function(e2){toast('Couldn\'t save. Check your connection; your change is kept on this screen.');throw e2});
+  }).catch(function(){}).then(function(){pending--;setTimeout(function(){pendingPath[path]--},1500);if(!pending)setSave('Saved')});
+}
+function remove(col,id){S[col]=S[col].filter(function(x){return x.id!==id});sb.from('docs').delete().eq('col',col).eq('id',id).then(function(r){if(r.error)toast('Couldn\'t delete. Try again.')});render()}
+function patch(col,id,data){var it=find(col,id);if(!it)return;Object.assign(it,data);write(col,id,data,false)}
+function create(col,data){var id=uid();var row=Object.assign({},data);S[col].push(Object.assign({id:id},row));write(col,id,row,true);return id}
+function find(col,id){for(var i=0;i<S[col].length;i++)if(S[col][i].id===id)return S[col][i];return null}
+
+var debTimers={},debFns={};function debounce(key,fn,ms){clearTimeout(debTimers[key]);setSave('Typing…');debFns[key]=fn;debTimers[key]=setTimeout(function(){delete debFns[key];fn()},ms||900)}
+function flush(){Object.keys(debFns).forEach(function(k){clearTimeout(debTimers[k]);var f=debFns[k];delete debFns[k];f()})}
+window.addEventListener('pagehide',flush);document.addEventListener('visibilitychange',function(){if(document.hidden)flush()});
+
+/* ---------- uploads ---------- */
+function pickFile(accept,cb){var f=document.getElementById('filePick');f.value='';f.accept=accept;f.onchange=function(){if(f.files[0])cb(f.files[0])};f.click()}
+function shrink(file){return new Promise(function(res){if(!/^image\/(jpeg|png|webp)/.test(file.type))return res(file);var u=URL.createObjectURL(file);var im=new Image();im.onload=function(){var m=1800,w=im.width,h=im.height,s=Math.min(1,m/Math.max(w,h));var c=document.createElement('canvas');c.width=Math.round(w*s);c.height=Math.round(h*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);c.toBlob(function(b){URL.revokeObjectURL(u);res(b||file)},'image/jpeg',.85)};im.onerror=function(){res(file)};im.src=u})}
+function upload(file){setSave('Uploading…');return shrink(file).then(function(b){var ext=(b.type==='image/jpeg'?'jpg':(file.name.split('.').pop()||'bin')).toLowerCase().replace(/[^a-z0-9]/g,'');var path=user.id+'/'+uid()+'.'+ext;return sb.storage.from('photos').upload(path,b,{contentType:b.type||file.type,upsert:false}).then(function(r){if(r.error)throw r.error;return sb.storage.from('photos').createSignedUrl(path,604800)}).then(function(r){var key='sb:'+path;if(r.data)signed[key]=r.data.signedUrl;setSave('Saved');return key})}).catch(function(e){toast('Upload failed. Try a smaller file (max 20 MB).');setSave('');throw e})}
+
+/* ---------- routing ---------- */
+var ROUTES=['home','courses','interests','trips','trip','tripmode'];
+function route(){var h=location.hash.replace('#','');return ROUTES.indexOf(h)>=0?h:'home'}
+function go(r){if(location.hash==='#'+r)render();else location.hash=r;window.scrollTo(0,0)}
+window.addEventListener('hashchange',function(){flush();render();window.scrollTo(0,0)});
+
+/* ---------- derived ---------- */
+function program(){var mods=S.modules,done=mods.filter(function(m){return m.done}).length;return{total:mods.length,done:done}}
+function courseMods(cid){return S.modules.filter(function(m){return m.courseId===cid}).sort(byOrder)}
+function nextModule(){var cs=S.courses.slice().sort(byOrder);for(var i=0;i<cs.length;i++){var ms=courseMods(cs[i].id);for(var j=0;j<ms.length;j++)if(!ms[j].done)return{c:cs[i],m:ms[j]}}return null}
+function upcomingTrips(){var t=today();return S.trips.filter(function(x){return x.status!=='Bucket list'&&x.end&&x.end>=t}).sort(function(a,b){return (a.start||'')<(b.start||'')?-1:1})}
+function activeTrip(){var t=today();return S.trips.filter(function(x){return x.start&&x.end&&x.status!=='Bucket list'&&daysBetween(t,x.start)<=2&&x.end>=t}).sort(function(a,b){return a.start<b.start?-1:1})[0]||null}
+function tripDays(tr){if(!tr.start||!tr.end)return tr.days||[];var n=daysBetween(tr.start,tr.end)+1;if(n<1||n>60)return tr.days||[];var d=(tr.days||[]).slice(0,n);while(d.length<n)d.push({title:'',items:[]});return d}
+function statusPill(s){var m={'Booked':'p-olive','Planning':'p-gold','Bucket list':'p-sea','Done':'p-grey'};return '<span class="pill '+(m[s]||'p-grey')+'">'+esc(s||'Planning')+'</span>'}
+
+/* ---------- views ---------- */
+var I={moon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
+sun:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+tick:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFF6EC" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>',
+x:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+play:'<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16l14-8z"/></svg>'};
+
+function nav(r){
+  var tabs=[['home','Home'],['courses','Courses'],['interests','Interests'],['trips','Trips']];
+  var at=activeTrip();
+  return '<nav class="top" aria-label="Sections"><div class="wrap"><a href="#home" class="brand">Tamara</a>'+
+  tabs.map(function(t){var on=r===t[0]||(t[0]==='trips'&&(r==='trip'));return '<a href="#'+t[0]+'" class="tab'+(on?' on':'')+'"'+(on?' aria-current="page"':'')+'>'+t[1]+'</a>'}).join('')+
+  (at?'<a href="#tripmode" class="tab'+(r==='tripmode'?' on':'')+'" style="color:var(--clay);font-weight:600">Trip mode</a>':'')+
+  '<span id="saveState" class="save" role="status" aria-live="polite">'+''+'</span>'+
+  '<button class="icon-btn press" data-act="theme" aria-label="'+(ui.dark?'Switch to light mode':'Switch to dark mode')+'">'+(ui.dark?I.sun:I.moon)+'</button></div></nav>';
+}
+
+function clockHtml(){var n=new Date(),h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0');return '<span class="flip">'+h[0]+'</span><span class="flip">'+h[1]+'</span><span class="serif" style="font-size:20px;color:var(--gold);padding:0 1px">:</span><span class="flip">'+m[0]+'</span><span class="flip">'+m[1]+'</span>'}
+function greeting(){var h=new Date().getHours();return h<12?'Good morning':h<18?'Good afternoon':'Good evening'}
+
+function viewHome(){
+  var n=new Date(),nt=upcomingTrips()[0],nm=nextModule(),p=program();
+  var sub=[];if(nt&&nt.start){var dd=daysBetween(today(),nt.start);sub.push(dd>0?esc(nt.name)+' in '+dd+' day'+(dd===1?'':'s')+'.':esc(nt.name)+' is on now.')}if(nm)sub.push(esc(nm.m.title||'Next module')+' is next.');
+  var h='<main class="page"><div class="wrap">'+
+  '<header class="fade row" style="flex-wrap:wrap;gap:28px;margin-bottom:32px">'+
+   '<div class="row" style="gap:0;border-radius:20px;overflow:hidden;background:var(--card);border:1px solid var(--line);align-items:stretch">'+
+    '<div style="background:var(--dateBg);color:var(--dateInk);padding:14px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:96px"><span style="font-size:13px;font-weight:600;letter-spacing:.5px">'+n.toLocaleDateString('en-GB',{month:'short'}).toUpperCase()+'</span><span class="serif" style="font-weight:300;font-size:64px;line-height:.95">'+n.getDate()+'</span></div>'+
+    '<div style="padding:14px 20px;display:flex;flex-direction:column;justify-content:center;gap:8px"><span class="serif" style="font-style:italic;font-size:24px">'+n.toLocaleDateString('en-GB',{weekday:'long'})+'</span><span id="clk" class="row" style="gap:3px" aria-label="Current time">'+clockHtml()+'</span></div>'+
+   '</div>'+
+   '<div style="flex:1 1 320px;min-width:0"><h1 class="serif" style="font-weight:400;font-size:clamp(36px,5vw,52px);line-height:1;letter-spacing:-1px;margin-bottom:8px">'+greeting()+', Tamara</h1><p class="muted" style="margin:0;font-size:16px">'+(sub.join(' ')||'Nothing urgent. Enjoy it.')+'</p></div>'+
+  '</header><div class="grid12">';
+  // next trip
+  if(nt){var dd=nt.start?daysBetween(today(),nt.start):null,days=tripDays(nt),planned=days.filter(function(d){return d.items&&d.items.length}).length,bk=(nt.bookings||[]).length,pk=nt.packing||[],pd=pk.filter(function(x){return x.done}).length;
+    h+='<a href="#trip" data-trip="'+esc(nt.id)+'" class="s8 lift zoom fade photo-card" style="min-height:340px;border-radius:22px">'+img(nt.cover||S.settings.defaultTrip,'')+'<span style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(20,16,12,.78),rgba(20,16,12,.2) 65%,transparent)"></span>'+
+    '<span style="position:relative;display:flex;flex-direction:column;justify-content:space-between;min-height:340px;padding:28px"><span class="row"><span class="pill" style="background:rgba(255,246,236,.18)">Next trip</span>'+statusPill(nt.status)+'</span><span>'+
+    '<span class="row" style="align-items:baseline;gap:14px"><span class="serif" style="font-weight:300;font-size:96px;line-height:.9">'+(dd==null?'–':Math.max(dd,0))+'</span><span style="font-size:16px;line-height:1.3">'+(dd>0?'days until':'happening')+'<br>'+esc(nt.name)+'</span></span>'+
+    '<span style="display:block;margin:10px 0 18px;color:#EADFCC">'+(nt.start?fmtDate(nt.start)+' to '+fmtDate(nt.end)+', '+(daysBetween(nt.start,nt.end))+' nights':'Add dates')+'</span>'+
+    '<span class="row" style="flex-wrap:wrap">'+[['Itinerary',planned+' of '+days.length+' days',days.length?planned/days.length:0],['Bookings',bk+' saved',bk?1:0],['Packing',pd+' of '+pk.length,pk.length?pd/pk.length:0]].map(function(x){return '<span style="padding:10px 14px;border-radius:12px;background:rgba(255,246,236,.14);min-width:110px"><span style="display:block;font-size:12px;color:#EADFCC">'+x[0]+'</span><span style="display:block;font-size:16px;font-weight:500">'+x[1]+'</span><span style="display:block;height:4px;margin-top:6px;border-radius:2px;background:rgba(255,246,236,.2)"><span style="display:block;width:'+Math.round(x[2]*100)+'%;height:4px;border-radius:2px;background:#F3C987"></span></span></span>'}).join('')+'</span></span></span></a>';
+  }else{
+    h+='<div class="s8 card fade" style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:12px;min-height:240px"><h2 class="h2">No trip planned yet</h2><p class="muted" style="margin:0">Add a trip and its countdown, itinerary and bookings will show up here.</p><button class="btn dark" data-act="newTrip">Plan a trip</button></div>';
+  }
+  // todos
+  var todos=S.todos.slice().sort(function(a,b){return (a.done-b.done)||((b.created||0)-(a.created||0))});
+  h+='<section class="s4 card fade"><div class="row between" style="margin-bottom:14px"><h2 class="h2">To do</h2><span class="muted" style="font-size:13px">'+todos.filter(function(t){return !t.done}).length+' left</span></div>'+
+  '<form class="row" data-form="todo" style="margin-bottom:12px"><label for="todoIn" class="hide-label" style="position:absolute;left:-9999px">New to-do</label><input id="todoIn" class="input" placeholder="Add a to-do" autocomplete="off"><button class="btn dark press" style="width:42px;padding:0;justify-content:center;border-radius:12px;font-size:20px" aria-label="Add to-do">+</button></form>'+
+  '<div style="display:flex;flex-direction:column;gap:6px">'+(todos.length?todos.slice(0,8).map(function(t){return '<div class="row" style="gap:4px"><button class="check press" data-act="todo" data-id="'+esc(t.id)+'" aria-pressed="'+(!!t.done)+'"><span class="box'+(t.done?' on':'')+'">'+(t.done?I.tick:'')+'</span><span class="'+(t.done?'done-text':'')+'">'+esc(t.text)+'</span></button><button class="x" data-act="delTodo" data-id="'+esc(t.id)+'" aria-label="Delete '+esc(t.text)+'">'+I.x+'</button></div>'}).join(''):'<p class="muted" style="margin:6px 2px">All clear.</p>')+'</div></section>';
+  // courses
+  var cs=S.courses.slice().sort(byOrder),cur=nm?nm.c:cs[0];
+  h+='<section class="s7 card fade"><div class="row" style="gap:18px;margin-bottom:16px;flex-wrap:wrap">'+(cur&&cur.cover?img(cur.cover,'','width:76px;height:76px;border-radius:16px;object-fit:cover;flex:none'):'')+
+  '<div style="flex:1;min-width:200px"><h2 class="h2" style="margin-bottom:4px">Courses</h2><p class="muted" style="margin:0 0 8px;font-size:14px">'+esc(S.settings.programName||'Skin Care Science')+', '+p.done+' of '+p.total+' modules done</p><div class="bar"><span style="width:'+(p.total?Math.round(p.done/p.total*100):0)+'%"></span></div></div>'+
+  (nm?'<button class="btn dark press" data-act="openModule" data-id="'+esc(nm.m.id)+'">Continue</button>':'')+'</div>';
+  if(nm)h+='<button class="row press" data-act="openModule" data-id="'+esc(nm.m.id)+'" style="width:100%;text-align:left;border:none;background:var(--soft);border-radius:14px;padding:14px 16px;margin-bottom:12px"><span style="flex:1;min-width:0"><span class="muted" style="display:block;font-size:12px">Up next</span><span style="display:block;font-weight:500">'+esc(nm.c.title)+'</span><span class="muted" style="font-size:13px">'+esc(nm.m.title)+'</span></span><span class="pill p-olive">Open</span></button>';
+  var recent=S.modules.filter(function(m){return m.notesHtml&&m.updated}).sort(function(a,b){return b.updated-a.updated}).slice(0,3);
+  h+=recent.length?recent.map(function(m){var c=find('courses',m.courseId);return '<button class="row press" data-act="openModule" data-id="'+esc(m.id)+'" style="width:100%;text-align:left;border:none;border-top:1px solid var(--line);background:transparent;padding:12px 4px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">'+esc(m.title)+'</span><span class="muted" style="font-size:13px">'+esc(c?c.short||c.title:'')+'</span></span><span class="muted" style="font-size:13px">'+new Date(m.updated).toLocaleDateString('en-GB',{day:'numeric',month:'short'})+'</span></button>'}).join(''):'<p class="muted" style="margin:4px 2px 0;font-size:14px">Your latest notes will show here.</p>';
+  h+='</section>';
+  // music
+  var st=S.settings;
+  h+='<section class="s5 lift fade photo-card" style="min-height:290px;border-radius:22px">'+img(st.musicImage,'')+'<span class="shade" style="background:linear-gradient(transparent 20%,rgba(20,16,12,.8))"></span><div style="position:relative;padding:24px;display:flex;flex-direction:column;justify-content:flex-end;min-height:290px">'+
+  '<h2 class="h2" style="color:#FFF6EC;margin-bottom:4px">'+esc(st.playlistName||'Evening mix')+'</h2><p style="margin:0 0 16px;font-size:14px;color:#EADFCC">'+esc(st.artists||'')+'</p><div class="row">'+
+  (st.playlistUrl?'<a href="'+esc(safeUrl(st.playlistUrl))+'" target="_blank" rel="noopener" class="btn press" style="background:#FFF6EC;color:#241F1A;border-color:#FFF6EC">'+I.play+'Play in Spotify</a>':'')+
+  '<button class="btn press" data-act="editMusic" style="color:#FFF6EC;border-color:rgba(255,246,236,.4)">'+(st.playlistUrl?'Edit':'Add playlist link')+'</button></div></div></section>';
+  // interests
+  var tp=S.topics.slice().sort(byOrder);
+  h+='<section class="s12 card fade"><div class="row between" style="margin-bottom:18px"><h2 class="h2">Interests</h2><button class="btn press" data-act="newTopic">New topic</button></div>'+
+  (tp.length?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px">'+tp.map(function(t){return '<button class="photo-card lift zoom" style="height:200px" data-act="openTopic" data-id="'+esc(t.id)+'">'+img(t.cover,'')+'<span class="shade"></span><span class="cap"><span class="serif" style="display:block;font-size:21px">'+esc(t.name)+'</span><span style="font-size:13px;color:#EADFCC">'+(t.notesHtml?'Has notes':'No notes yet')+'</span></span></button>'}).join('')+'</div>':'<div class="empty">Add topics you like learning about.</div>')+'</section>';
+  // trips strip
+  var trips=S.trips.slice().sort(function(a,b){return (a.status==='Bucket list')-(b.status==='Bucket list')||((a.start||'z')<(b.start||'z')?-1:1)});
+  h+='<section class="s12 card fade"><div class="row between" style="margin-bottom:18px;flex-wrap:wrap"><h2 class="h2">Trips</h2><div class="row"><a class="btn press" href="#trips">All trips</a><button class="btn dark press" data-act="newTrip">New trip</button></div></div>'+
+  (trips.length?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px">'+trips.slice(0,4).map(tripCard).join('')+'</div>':'<div class="empty">Trips you plan show up here.</div>')+'</section>';
+  h+='</div><p class="muted row" style="margin:28px 0 0;font-size:13px;justify-content:center;flex-wrap:wrap"><button class="btn sm ghost" data-act="export">Download backup</button><button class="btn sm ghost" data-act="import">Restore a backup</button><button class="btn sm ghost" data-act="signout">Sign out</button></p></div></main>';
+  return h;
+}
+function tripCard(t){return '<a href="#trip" data-trip="'+esc(t.id)+'" class="lift zoom" style="display:block;text-decoration:none;border-radius:16px;padding:8px;background:var(--soft)"><span style="display:block;border-radius:12px;overflow:hidden;height:170px;background:var(--soft2)">'+img(t.cover||S.settings.defaultTrip,'','width:100%;height:170px;object-fit:cover;display:block')+'</span><span class="row between" style="margin:10px 6px 2px"><span class="serif" style="font-size:19px">'+esc(t.name)+'</span>'+statusPill(t.status)+'</span><span class="muted" style="display:block;margin:0 6px 6px;font-size:13px">'+(t.start?fmtDate(t.start)+' to '+fmtDate(t.end):'Someday')+'</span></a>'}
+
+/* editor markup */
+function toolbar(){
+  var inks=[['Default','inherit'],['Olive','#6B7A4B'],['Clay','#A65A3C'],['Sea','#2E5A73'],['Gold','#C98A3A']],marks=[['Gold','#F8E3BE'],['Sage','#E3E9D9'],['Sky','#DCE8EC'],['Blush','#F3DEDE']];
+  return '<div class="toolbar" role="toolbar" aria-label="Formatting">'+
+  '<button class="tool serif" style="font-size:18px" data-cmd="h2" aria-label="Heading">H</button><button class="tool" style="font-weight:700" data-cmd="bold" aria-label="Bold">B</button><button class="tool serif" style="font-style:italic;font-size:17px" data-cmd="italic" aria-label="Italic">I</button><button class="tool" style="text-decoration:underline" data-cmd="underline" aria-label="Underline">U</button><span class="sep"></span>'+
+  '<button class="tool" data-cmd="ul" aria-label="Bulleted list"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></button>'+
+  '<button class="tool" data-cmd="check" aria-label="Checklist"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="6" height="6" rx="1"/><path d="m4.5 7 1 1 2-2M13 7h8"/><rect x="3" y="14" width="6" height="6" rx="1"/><path d="M13 17h8"/></svg></button>'+
+  '<button class="tool" data-cmd="callout" aria-label="Callout box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 10h6M7 14h10"/></svg></button>'+
+  '<button class="tool" data-cmd="link" aria-label="Add link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>'+
+  '<button class="tool" data-cmd="image" aria-label="Insert image"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg></button><span class="sep"></span>'+
+  inks.map(function(c){return '<button class="swatch" data-cmd="color" data-val="'+c[1]+'" style="background:'+(c[1]==='inherit'?'var(--ink)':c[1])+'" aria-label="'+c[0]+' text"></button>'}).join('')+'<span class="sep"></span>'+
+  marks.map(function(c){return '<button class="swatch sq" data-cmd="hilite" data-val="'+c[1]+'" style="background:'+c[1]+'" aria-label="'+c[0]+' highlight"></button>'}).join('')+
+  '<button class="tool" data-cmd="clear" aria-label="Clear formatting" style="font-size:13px">Clear</button></div>';
+}
+function editor(col,id,ph){return toolbar()+'<div class="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Notes" data-editor="'+col+'" data-id="'+esc(id)+'" data-ph="'+esc(ph)+'"></div>'}
+
+function viewCourses(){
+  var cs=S.courses.slice().sort(byOrder);
+  if(!cs.length)return '<main class="page"><div class="wrap"><div class="empty">No courses yet.</div></div></main>';
+  var cid=ui.courseId&&find('courses',ui.courseId)?ui.courseId:cs[0].id,c=find('courses',cid),ms=courseMods(cid);
+  var mid=ui.moduleId&&find('modules',ui.moduleId)&&find('modules',ui.moduleId).courseId===cid?ui.moduleId:(ms[0]&&ms[0].id),m=mid&&find('modules',mid);
+  var h='<main class="page"><div class="wrap" style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">'+
+  '<aside class="fade" style="flex:1 1 280px;max-width:340px;min-width:0;display:flex;flex-direction:column;gap:20px"><div><p class="muted" style="margin:0 0 4px;font-size:13px;font-weight:600">'+esc(S.settings.programName||'Program')+'</p><h1 class="serif" style="font-size:30px;font-weight:400;margin-bottom:12px">Your courses</h1><div style="display:flex;flex-direction:column;gap:6px">'+
+  cs.map(function(x){var mm=courseMods(x.id),d=mm.filter(function(k){return k.done}).length;return '<button class="side-item press'+(x.id===cid?' on':'')+'" data-act="pickCourse" data-id="'+esc(x.id)+'">'+(x.cover?img(x.cover,'','width:46px;height:46px;border-radius:12px;object-fit:cover;flex:none'):'<span style="width:46px;height:46px;border-radius:12px;background:var(--soft2);flex:none"></span>')+'<span style="flex:1;min-width:0"><span style="display:block;font-size:14px;font-weight:500;line-height:1.3">'+esc(x.short||x.title)+'</span><span class="bar" style="display:block;height:5px;margin:6px 0 3px"><span style="width:'+(mm.length?Math.round(d/mm.length*100):0)+'%"></span></span><span class="muted" style="font-size:12px">'+d+' of '+mm.length+' modules</span></span></button>'}).join('')+
+  '</div></div><div><div class="row between" style="margin-bottom:8px"><h2 style="font-size:13px;font-weight:600" class="muted">Modules</h2><button class="btn sm press" data-act="addModule" data-id="'+esc(cid)+'">Add module</button></div><div style="display:flex;flex-direction:column;gap:2px">'+
+  ms.map(function(x,i){return '<button class="mod press'+(x.id===mid?' on':'')+'" data-act="pickModule" data-id="'+esc(x.id)+'"><span class="box'+(x.done?' on':'')+'" style="width:18px;height:18px">'+(x.done?I.tick:'')+'</span><span style="flex:1;min-width:0;font-size:14px">'+esc(x.title)+'</span>'+(x.notesHtml?'<span class="muted" style="font-size:12px">notes</span>':'')+'</button>'}).join('')+'</div></div></aside>';
+  h+='<section class="card fade" style="flex:999 1 560px;min-width:0;padding:0;overflow:hidden">';
+  if(m){
+    h+='<div style="position:relative;height:180px;background:var(--soft2);overflow:hidden">'+img(c.cover,'','width:100%;height:100%;object-fit:cover')+'<button class="btn sm press" data-act="courseCover" data-id="'+esc(cid)+'" style="position:absolute;right:16px;bottom:16px;background:rgba(255,246,236,.92);color:#241F1A;border:none">Change cover</button></div>'+
+    '<div style="padding:24px 32px 40px;max-width:820px;margin:0 auto"><p class="muted" style="margin:0 0 6px;font-size:13px">'+esc(c.title)+'</p>'+
+    '<label for="mTitle" style="position:absolute;left:-9999px">Module title</label><input id="mTitle" class="serif" data-field="modules.title" data-id="'+esc(m.id)+'" value="'+esc(m.title)+'" style="width:100%;border:none;background:transparent;font-size:clamp(28px,4vw,40px);font-weight:400;padding:0;margin-bottom:16px">'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:22px">'+
+     '<div style="background:var(--soft);border-radius:14px;padding:14px"><div class="row between"><span style="font-weight:600;font-size:14px">Lecture</span>'+(m.lectureUrl?'<a class="btn sm dark" href="'+esc(safeUrl(m.lectureUrl))+'" target="_blank" rel="noopener">Open</a>':'')+'</div><label class="f" for="mLec">Link to the lecture</label><input id="mLec" class="input" data-field="modules.lectureUrl" data-id="'+esc(m.id)+'" value="'+esc(m.lectureUrl||'')+'" placeholder="Paste the lecture link"></div>'+
+     '<div style="background:var(--soft);border-radius:14px;padding:14px"><div class="row between"><span style="font-weight:600;font-size:14px">Slides</span>'+(m.slidesUrl?'<a class="btn sm dark" href="'+esc(safeLink(m.slidesUrl))+'" target="_blank" rel="noopener">Open</a>':'')+'</div><label class="f" for="mSl">Link, or upload a PDF</label><div class="row"><input id="mSl" class="input" data-field="modules.slidesUrl" data-id="'+esc(m.id)+'" value="'+esc(m.slidesUrl||'')+'" placeholder="Paste a link"><button class="btn sm press" data-act="uploadSlides" data-id="'+esc(m.id)+'">Upload</button></div></div>'+
+    '</div><div class="row between" style="margin-bottom:12px;flex-wrap:wrap"><h2 style="font-size:18px;font-weight:600">My notes</h2><button class="btn sm press'+(m.done?' dark':'')+'" data-act="modDone" data-id="'+esc(m.id)+'" aria-pressed="'+(!!m.done)+'">'+(m.done?'Module done':'Mark module done')+'</button></div>'+
+    editor('modules',m.id,'Start typing your notes for this module…')+'</div>';
+  }else h+='<div style="padding:40px"><div class="empty">Add a module to start taking notes.</div></div>';
+  return h+'</section></div></main>';
+}
+
+function viewInterests(){
+  var tp=S.topics.slice().sort(byOrder),t=ui.topicId&&find('topics',ui.topicId)||tp[0];
+  var h='<main class="page"><div class="wrap"><div class="row between" style="margin-bottom:20px;flex-wrap:wrap"><h1 class="serif" style="font-size:40px;font-weight:400">Interests</h1><button class="btn dark press" data-act="newTopic">New topic</button></div>';
+  if(!tp.length)return h+'<div class="empty">Add a topic to start.</div></div></main>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px">'+tp.map(function(x){return '<button class="photo-card lift zoom" style="height:150px;'+(x.id===t.id?'outline:3px solid var(--clay);outline-offset:2px':'')+'" data-act="pickTopic" data-id="'+esc(x.id)+'">'+img(x.cover,'')+'<span class="shade"></span><span class="cap serif" style="font-size:19px">'+esc(x.name)+'</span></button>'}).join('')+'</div>';
+  h+='<section class="card fade" style="padding:0;overflow:hidden"><div style="position:relative;height:200px;background:var(--soft2)">'+img(t.cover,'','width:100%;height:100%;object-fit:cover')+'<div class="row" style="position:absolute;right:16px;bottom:16px"><button class="btn sm press" data-act="topicCover" data-id="'+esc(t.id)+'" style="background:rgba(255,246,236,.92);color:#241F1A;border:none">Change cover</button><button class="btn sm press" data-act="delTopic" data-id="'+esc(t.id)+'" style="background:rgba(255,246,236,.92);color:#7A3E24;border:none">Delete topic</button></div></div>'+
+  '<div style="padding:24px 32px 40px;max-width:820px;margin:0 auto"><label for="tName" style="position:absolute;left:-9999px">Topic name</label><input id="tName" class="serif" data-field="topics.name" data-id="'+esc(t.id)+'" value="'+esc(t.name)+'" style="width:100%;border:none;background:transparent;font-size:40px;padding:0;margin-bottom:16px">'+editor('topics',t.id,'Notes, links, photos, anything you want to remember…')+'</div></section></div></main>';
+  return h;
+}
+
+function viewTrips(){
+  var tr=S.trips.slice().sort(function(a,b){return (a.status==='Bucket list')-(b.status==='Bucket list')||((a.start||'z')<(b.start||'z')?-1:1)});
+  return '<main class="page"><div class="wrap"><div class="row between" style="margin-bottom:20px;flex-wrap:wrap"><h1 class="serif" style="font-size:40px;font-weight:400">Trips</h1><button class="btn dark press" data-act="newTrip">New trip</button></div>'+
+  (tr.length?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px">'+tr.map(tripCard).join('')+'</div>':'<div class="empty">No trips yet. Plan your first one.</div>')+'</div></main>';
+}
+
+function viewTrip(){
+  var t=ui.tripId&&find('trips',ui.tripId);if(!t)return viewTrips();
+  var tab=ui.tripTab||'plan',days=tripDays(t);
+  var h='<div style="position:relative;height:300px;overflow:hidden;background:#241F1A">'+img(t.cover||S.settings.defaultTrip,'','width:100%;height:100%;object-fit:cover;opacity:.85')+'<span style="position:absolute;inset:0;background:linear-gradient(transparent 30%,rgba(20,16,12,.8))"></span>'+
+  '<div style="position:absolute;left:0;right:0;bottom:0"><div class="wrap" style="padding-bottom:24px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;color:#FFF6EC"><div style="flex:1 1 300px;min-width:0"><div class="row" style="margin-bottom:8px">'+statusPill(t.status)+'</div><h1 class="serif" style="font-size:clamp(40px,6vw,60px);font-weight:400;line-height:1">'+esc(t.name)+'</h1><p style="margin:6px 0 0;color:#EADFCC">'+(t.start?fmtDate(t.start,{weekday:'short',day:'numeric',month:'short'})+' to '+fmtDate(t.end,{weekday:'short',day:'numeric',month:'short',year:'numeric'}):'No dates yet')+'</p></div>'+
+  '<div class="row" style="flex-wrap:wrap"><button class="btn sm press" data-act="tripCover" data-id="'+esc(t.id)+'" style="background:rgba(255,246,236,.92);color:#241F1A;border:none">Change cover</button><button class="btn sm press" data-act="editTrip" data-id="'+esc(t.id)+'" style="background:rgba(255,246,236,.92);color:#241F1A;border:none">Edit details</button><a href="#tripmode" class="btn sm press" data-tm="'+esc(t.id)+'" style="background:#FFF6EC;color:#241F1A;border:none;font-weight:600">Open trip mode</a></div></div></div></div>';
+  h+='<main class="page" style="padding-top:24px"><div class="wrap"><div class="tabs" role="tablist" aria-label="Trip sections" style="margin-bottom:22px">'+[['plan','Itinerary'],['book','Bookings'],['pack','Packing'],['places','Places'],['notes','Notes'],['inspo','Inspiration']].map(function(x){return '<button role="tab" aria-selected="'+(tab===x[0])+'" class="press'+(tab===x[0]?' on':'')+'" data-act="tripTab" data-val="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div><div class="fade">';
+  if(tab==='plan'){
+    if(!days.length)h+='<div class="empty">Add start and end dates to get a day-by-day plan. <button class="btn sm press" data-act="editTrip" data-id="'+esc(t.id)+'">Add dates</button></div>';
+    h+='<div style="display:flex;flex-direction:column;gap:14px">'+days.map(function(d,i){var date=t.start?addDays(t.start,i):'';var items=(d.items||[]).slice().sort(function(a,b){return (a.time||'99')<(b.time||'99')?-1:1});
+      return '<div class="card" style="padding:18px 20px"><div class="row" style="flex-wrap:wrap;margin-bottom:10px"><span class="pill p-gold">Day '+(i+1)+'</span><span class="muted" style="font-size:13px">'+(date?fmtDate(date,{weekday:'long',day:'numeric',month:'short'}):'')+'</span><label for="dt'+i+'" style="position:absolute;left:-9999px">Day '+(i+1)+' title</label><input id="dt'+i+'" class="serif" data-field="day.title" data-i="'+i+'" value="'+esc(d.title||'')+'" placeholder="Name this day" style="flex:1;min-width:160px;border:none;background:transparent;font-size:21px;padding:4px 0"></div>'+
+      items.map(function(it){return '<div class="row" style="padding:8px 0;border-top:1px solid var(--line)"><span class="muted" style="width:52px;font-size:13px;flex:none">'+esc(it.time||'')+'</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">'+esc(it.title)+'</span>'+(it.where?'<a class="muted" style="font-size:13px" href="'+mapsUrl(it.where)+'" target="_blank" rel="noopener">'+esc(it.where)+'</a>':'')+'</span><button class="x" data-act="delItem" data-i="'+i+'" data-id="'+esc(it.id)+'" aria-label="Remove '+esc(it.title)+'">'+I.x+'</button></div>'}).join('')+
+      '<form class="row" data-form="item" data-i="'+i+'" style="margin-top:10px;flex-wrap:wrap"><label style="position:absolute;left:-9999px" for="it'+i+'">Time</label><input id="it'+i+'" type="time" class="input" name="time" style="width:120px;flex:none"><input class="input" name="title" placeholder="What" aria-label="What" style="flex:2 1 160px"><input class="input" name="where" placeholder="Where (for directions)" aria-label="Where" style="flex:2 1 160px"><button class="btn sm dark press">Add</button></form></div>'}).join('')+'</div>';
+  }
+  if(tab==='book'){
+    h+='<div class="card"><div style="display:flex;flex-direction:column;gap:10px">'+((t.bookings||[]).map(function(b){return '<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap"><span class="pill '+({Flight:'p-sea',Stay:'p-gold',Tickets:'p-clay',Car:'p-olive'}[b.kind]||'p-grey')+'">'+esc(b.kind)+'</span><span style="flex:1;min-width:160px"><span style="display:block;font-weight:500">'+esc(b.title)+'</span><span class="muted" style="font-size:13px">'+esc(b.detail||'')+'</span></span>'+(b.ref?'<button class="btn sm press" data-act="copy" data-val="'+esc(b.ref)+'">'+esc(b.ref)+'</button>':'')+'<button class="x" data-act="delBooking" data-id="'+esc(b.id)+'" aria-label="Remove booking">'+I.x+'</button></div>'}).join('')||'<p class="muted" style="margin:0">No bookings yet.</p>')+'</div>'+
+    '<form data-form="booking" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:16px"><select class="input" name="kind" aria-label="Type"><option>Flight</option><option>Stay</option><option>Tickets</option><option>Car</option><option>Other</option></select><input class="input" name="title" placeholder="e.g. TLV to CDG" aria-label="Title" required><input class="input" name="detail" placeholder="Date, time, seat, address" aria-label="Details"><input class="input" name="ref" placeholder="Confirmation number" aria-label="Confirmation number"><button class="btn dark press">Add booking</button></form></div>';
+  }
+  if(tab==='pack'){var pk=t.packing||[],pd=pk.filter(function(x){return x.done}).length;
+    h+='<div class="card" style="max-width:620px"><div class="row between" style="margin-bottom:10px"><span class="muted">'+pd+' of '+pk.length+' packed</span>'+(pk.length?'':'<button class="btn sm press" data-act="packStarter">Add a starter list</button>')+'</div><div class="bar" style="margin-bottom:14px"><span style="width:'+(pk.length?Math.round(pd/pk.length*100):0)+'%"></span></div><div style="display:flex;flex-direction:column;gap:6px">'+
+    pk.map(function(x){return '<div class="row" style="gap:4px"><button class="check press" data-act="packToggle" data-id="'+esc(x.id)+'"><span class="box'+(x.done?' on':'')+'" style="'+(x.done?'background:var(--olive);border-color:var(--olive)':'')+'">'+(x.done?I.tick:'')+'</span><span class="'+(x.done?'done-text':'')+'">'+esc(x.text)+'</span></button><button class="x" data-act="packDel" data-id="'+esc(x.id)+'" aria-label="Remove '+esc(x.text)+'">'+I.x+'</button></div>'}).join('')+
+    '</div><form class="row" data-form="pack" style="margin-top:12px"><input class="input" name="text" placeholder="Add an item" aria-label="Packing item" required><button class="btn dark press">Add</button></form></div>';}
+  if(tab==='places'){
+    h+='<div class="card"><p class="muted" style="margin:0 0 12px;font-size:14px">Each place opens in Google Maps for directions.</p><div style="display:flex;flex-direction:column;gap:8px">'+((t.places||[]).map(function(p,i){return '<div class="row" style="padding:10px 12px;border-radius:14px;background:var(--soft);flex-wrap:wrap"><span style="width:28px;height:28px;border-radius:50%;background:'+['#A65A3C','#2E5A73','#6B7A4B','#C98A3A'][i%4]+';color:#FFF6EC;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none">'+(i+1)+'</span><span style="flex:1;min-width:150px"><span style="display:block;font-weight:500">'+esc(p.name)+'</span><span class="muted" style="font-size:13px">'+esc([p.kind,p.day?'Day '+p.day:''].filter(Boolean).join(', '))+'</span></span><a class="btn sm press" href="'+mapsUrl(p.name+(t.name?' '+t.name:''))+'" target="_blank" rel="noopener">Directions</a><button class="x" data-act="delPlace" data-id="'+esc(p.id)+'" aria-label="Remove '+esc(p.name)+'">'+I.x+'</button></div>'}).join('')||'<p class="muted" style="margin:0">No places saved yet.</p>')+'</div>'+
+    '<form data-form="place" style="display:grid;grid-template-columns:2fr 1fr 90px auto;gap:8px;margin-top:14px"><input class="input" name="name" placeholder="Place name" aria-label="Place name" required><input class="input" name="kind" placeholder="Museum, café…" aria-label="Kind"><input class="input" name="day" type="number" min="1" placeholder="Day" aria-label="Day"><button class="btn dark press">Add</button></form></div>';
+  }
+  if(tab==='notes')h+='<div class="card" style="max-width:860px">'+editor('trips',t.id,'Ideas, tips, things to remember…')+'</div>';
+  if(tab==='inspo'){var ins=t.inspo||[];
+    h+='<div class="card"><div class="row between" style="margin-bottom:14px"><span class="muted">Pin photos that set the mood for this trip.</span><button class="btn dark press" data-act="pinPhoto">Pin a photo</button></div>'+(ins.length?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:22px;padding:14px 6px">'+ins.map(function(p,i){return '<div class="pin lift" style="position:relative;--pin:'+['#A65A3C','#2E5A73','#C98A3A','#6B7A4B'][i%4]+';transform:rotate('+[-3,2,-1.5,3][i%4]+'deg)">'+img(p.url,'','height:200px')+'<button class="x" data-act="unpin" data-i="'+i+'" aria-label="Remove photo" style="position:absolute;right:4px;bottom:0">'+I.x+'</button></div>'}).join('')+'</div>':'<div class="empty">No photos pinned yet.</div>')+'</div>';}
+  h+='<div class="row" style="margin-top:28px;justify-content:flex-end"><button class="btn sm press" data-act="delTrip" data-id="'+esc(t.id)+'" style="color:var(--clay)">Delete trip</button></div></div></div></main>';
+  return h;
+}
+
+function viewTripMode(){
+  var t=(ui.tmId&&find('trips',ui.tmId))||activeTrip()||(ui.tripId&&find('trips',ui.tripId));
+  if(!t)return '<main class="page"><div class="wrap tm"><div class="empty">Trip mode turns on automatically 2 days before a trip starts.</div></div></main>';
+  var days=tripDays(t),idx=t.start?Math.max(0,Math.min(days.length-1,daysBetween(t.start,today()))):0,before=t.start&&today()<t.start,d=days[idx]||{items:[]};
+  var now=new Date(),hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  var items=(d.items||[]).slice().sort(function(a,b){return (a.time||'99')<(b.time||'99')?-1:1});var next=before?null:items.filter(function(x){return (x.time||'99')>=hm})[0];
+  var tab=ui.tmTab||'today';
+  var h='<div class="tm"><div style="position:relative;height:220px;overflow:hidden;background:#241F1A">'+img(t.cover||S.settings.defaultTrip,'','width:100%;height:100%;object-fit:cover;opacity:.82')+'<span style="position:absolute;inset:0;background:linear-gradient(transparent 30%,rgba(20,16,12,.82))"></span><div style="position:absolute;left:20px;right:20px;bottom:16px;color:#FFF6EC"><p style="margin:0 0 2px;font-size:13px;color:#EADFCC">'+(before?'Starts in '+daysBetween(today(),t.start)+' day'+(daysBetween(today(),t.start)===1?'':'s'):'Day '+(idx+1)+' of '+days.length+(d.title?', '+esc(d.title):''))+'</p><h1 class="serif" style="font-size:40px;font-weight:400;line-height:1">'+esc(t.name)+'</h1></div></div><div style="padding:16px;display:flex;flex-direction:column;gap:16px">';
+  if(next)h+='<div class="row" style="padding:16px;border-radius:18px;background:#9E5638;color:#FFF6EC"><div style="flex:1;min-width:0"><p style="margin:0;font-size:13px;opacity:.85">Next up'+(next.time?', '+esc(next.time):'')+'</p><p style="margin:0;font-size:18px;font-weight:600">'+esc(next.title)+'</p>'+(next.where?'<p style="margin:2px 0 0;font-size:13px;opacity:.85">'+esc(next.where)+'</p>':'')+'</div>'+(next.where?'<a class="btn press" href="'+mapsUrl(next.where)+'" target="_blank" rel="noopener" style="background:#FFF6EC;color:#8A3613;border:none;font-weight:600">Go</a>':'')+'</div>';
+  h+='<div class="tabs" role="tablist" style="display:grid;grid-template-columns:repeat(4,1fr);border-radius:14px">'+[['today','Today'],['book','Bookings'],['map','Map'],['pack','Packing']].map(function(x){return '<button role="tab" aria-selected="'+(tab===x[0])+'" style="border-radius:10px" class="press'+(tab===x[0]?' on':'')+'" data-act="tmTab" data-val="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div><div class="fade">';
+  if(tab==='today'){h+=before?'<div class="empty">Your trip hasn\'t started. Check Packing and Bookings.</div>':(items.length?items.map(function(it){var past=(it.time||'99')<hm&&it!==next;return '<div class="row" style="align-items:stretch;gap:12px;opacity:'+(past?.55:1)+'"><span class="muted" style="width:46px;padding-top:12px;font-size:13px;flex:none">'+esc(it.time||'')+'</span><div class="card" style="flex:1;padding:12px 14px;margin:4px 0;border-radius:14px;'+(it===next?'background:var(--dateBg)':'')+'"><p style="margin:0;font-weight:500">'+esc(it.title)+'</p>'+(it.where?'<a class="muted" style="font-size:13px" href="'+mapsUrl(it.where)+'" target="_blank" rel="noopener">'+esc(it.where)+'</a>':'')+'</div></div>'}).join(''):'<div class="empty">Nothing planned today. Enjoy it.</div>')}
+  if(tab==='book')h+=(t.bookings||[]).map(function(b){return '<div class="card row" style="padding:14px 16px;border-radius:16px;margin-bottom:10px"><span class="pill '+({Flight:'p-sea',Stay:'p-gold',Tickets:'p-clay',Car:'p-olive'}[b.kind]||'p-grey')+'">'+esc(b.kind)+'</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">'+esc(b.title)+'</span><span class="muted" style="font-size:13px">'+esc(b.detail||'')+'</span></span>'+(b.ref?'<button class="btn sm press" data-act="copy" data-val="'+esc(b.ref)+'">'+esc(b.ref)+'</button>':'')+'</div>'}).join('')||'<div class="empty">No bookings saved.</div>';
+  if(tab==='map')h+=(t.places||[]).map(function(p,i){return '<div class="card row" style="padding:12px 14px;border-radius:14px;margin-bottom:8px"><span style="width:26px;height:26px;border-radius:50%;background:'+['#A65A3C','#2E5A73','#6B7A4B','#C98A3A'][i%4]+';color:#FFF6EC;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none">'+(i+1)+'</span><span style="flex:1;min-width:0">'+esc(p.name)+'</span><a class="btn sm press" href="'+mapsUrl(p.name+' '+t.name)+'" target="_blank" rel="noopener">Directions</a></div>'}).join('')||'<div class="empty">No places saved.</div>';
+  if(tab==='pack'){var pk=t.packing||[];h+='<p class="muted" style="margin:0 0 8px;font-size:13px">'+pk.filter(function(x){return x.done}).length+' of '+pk.length+' packed</p>'+pk.map(function(x){return '<button class="check press" style="margin-bottom:6px;background:var(--card);border:1px solid var(--line)" data-act="packToggle" data-trip="'+esc(t.id)+'" data-id="'+esc(x.id)+'"><span class="box'+(x.done?' on':'')+'" style="'+(x.done?'background:var(--olive);border-color:var(--olive)':'')+'">'+(x.done?I.tick:'')+'</span><span class="'+(x.done?'done-text':'')+'">'+esc(x.text)+'</span></button>'}).join('')}
+  return h+'</div><a href="#trip" data-trip="'+esc(t.id)+'" class="btn" style="justify-content:center">Open full trip</a></div></div>';
+}
+
+/* ---------- render ---------- */
+var dirtyWhileEditing=false;
+function editing(){var a=document.activeElement;return a&&app.contains(a)&&(a.isContentEditable||a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT')}
+function softRender(){if(editing()){dirtyWhileEditing=true;return}render()}
+function render(){
+  var r=route();var v=r==='home'?viewHome():r==='courses'?viewCourses():r==='interests'?viewInterests():r==='trips'?viewTrips():r==='trip'?viewTrip():viewTripMode();
+  app.innerHTML=(r==='tripmode'?'':nav(r))+v+(r==='tripmode'?'<nav class="top" style="position:static;border-top:1px solid var(--line);border-bottom:none"><div class="wrap" style="justify-content:center"><a class="tab" href="#home">Home</a><a class="tab" href="#trips">Trips</a><button class="icon-btn press" data-act="theme" aria-label="Toggle dark mode">'+(ui.dark?I.sun:I.moon)+'</button></div></nav>':'');
+  mountEditors();
+  if(pending)setSave('Saving…');
+}
+function mountEditors(){
+  app.querySelectorAll('[data-editor]').forEach(function(el){var it=find(el.dataset.editor,el.dataset.id);el.innerHTML=sanitize(it&&it.notesHtml||'');el.querySelectorAll('img').forEach(function(im){var s0=im.getAttribute('src')||'';if(s0.indexOf('sb:')===0){im.setAttribute('data-sb',s0);im.src=rs(s0)}})});
+}
+
+/* ---------- events ---------- */
+function curTrip(){return find('trips',ui.tripId)}
+function tripPatch(t,data){patch('trips',t.id,data);softRender()}
+app.addEventListener('click',function(e){if(e.target.closest('[data-act]')&&!e.target.closest('[data-cmd]'))flush();
+  var tl=e.target.closest('[data-trip]');if(tl&&tl.tagName==='A'){ui.tripId=tl.dataset.trip;ui.tmId=null;saveUi()}
+  var tm=e.target.closest('[data-tm]');if(tm){ui.tmId=tm.dataset.tm;saveUi()}
+  var li=e.target.closest('.editor ul.checklist li');if(li&&e.offsetX<26){li.dataset.checked=li.dataset.checked==='true'?'false':'true';saveEditor(li.closest('.editor'));return}
+  var b=e.target.closest('[data-act],[data-cmd]');if(!b)return;
+  if(b.dataset.cmd){e.preventDefault();return runCmd(b)}
+  var a=b.dataset.act,id=b.dataset.id,t;
+  if(a==='theme'){ui.dark=!ui.dark;document.body.classList.toggle('dark',ui.dark);saveUi();render()}
+  else if(a==='todo'){t=find('todos',id);patch('todos',id,{done:!t.done});render()}
+  else if(a==='delTodo')remove('todos',id);
+  else if(a==='openModule'){var m=find('modules',id);ui.courseId=m.courseId;ui.moduleId=id;saveUi();go('courses')}
+  else if(a==='pickCourse'){ui.courseId=id;ui.moduleId=null;saveUi();render()}
+  else if(a==='pickModule'){ui.moduleId=id;saveUi();render()}
+  else if(a==='modDone'){t=find('modules',id);patch('modules',id,{done:!t.done});render()}
+  else if(a==='addModule'){var n=courseMods(id).length;var nid=create('modules',{courseId:id,order:n+1,title:'Module '+(n+1),done:false});ui.moduleId=nid;saveUi();render()}
+  else if(a==='uploadSlides')pickFile('application/pdf,image/*,.ppt,.pptx',function(f){upload(f).then(function(u){patch('modules',id,{slidesUrl:u});render()})});
+  else if(a==='courseCover')pickFile('image/*',function(f){upload(f).then(function(u){patch('courses',id,{cover:u});render()})});
+  else if(a==='topicCover')pickFile('image/*',function(f){upload(f).then(function(u){patch('topics',id,{cover:u});render()})});
+  else if(a==='tripCover')pickFile('image/*',function(f){upload(f).then(function(u){patch('trips',id,{cover:u});render()})});
+  else if(a==='openTopic'||a==='pickTopic'){ui.topicId=id;saveUi();a==='openTopic'?go('interests'):render()}
+  else if(a==='newTopic'){var tid=create('topics',{name:'New topic',order:S.topics.length+1,notesHtml:''});ui.topicId=tid;saveUi();go('interests')}
+  else if(a==='delTopic'){if(confirmBox('Delete this topic and its notes? This can\'t be undone.',function(){ui.topicId=null;remove('topics',id)}))return}
+  else if(a==='newTrip')tripForm(null);
+  else if(a==='editTrip')tripForm(find('trips',id));
+  else if(a==='delTrip')confirmBox('Delete this trip and everything in it? This can\'t be undone.',function(){remove('trips',id);go('trips')});
+  else if(a==='tripTab'){ui.tripTab=b.dataset.val;saveUi();render()}
+  else if(a==='tmTab'){ui.tmTab=b.dataset.val;saveUi();render()}
+  else if(a==='delItem'){t=curTrip();var days=tripDays(t).map(function(d){return{title:d.title||'',items:(d.items||[]).slice()}});var i=+b.dataset.i;days[i].items=days[i].items.filter(function(x){return x.id!==id});tripPatch(t,{days:days});render()}
+  else if(a==='delBooking'){t=curTrip();tripPatch(t,{bookings:(t.bookings||[]).filter(function(x){return x.id!==id})});render()}
+  else if(a==='packToggle'){t=find('trips',b.dataset.trip||ui.tripId);tripPatch(t,{packing:(t.packing||[]).map(function(x){return x.id===id?Object.assign({},x,{done:!x.done}):x})});render()}
+  else if(a==='packDel'){t=curTrip();tripPatch(t,{packing:(t.packing||[]).filter(function(x){return x.id!==id})});render()}
+  else if(a==='packStarter'){t=curTrip();tripPatch(t,{packing:['Passport','Phone charger','Travel adapter','Walking shoes','Rain jacket','Camera','Medication','Book for the flight'].map(function(x){return{id:uid(),text:x,done:false}})});render()}
+  else if(a==='delPlace'){t=curTrip();tripPatch(t,{places:(t.places||[]).filter(function(x){return x.id!==id})});render()}
+  else if(a==='pinPhoto'){t=curTrip();pickFile('image/*',function(f){upload(f).then(function(u){var c=find('trips',t.id);tripPatch(c,{inspo:(c.inspo||[]).concat([{url:u}])});render()})})}
+  else if(a==='unpin'){t=curTrip();var ins=(t.inspo||[]).slice();ins.splice(+b.dataset.i,1);tripPatch(t,{inspo:ins});render()}
+  else if(a==='copy'){var v=b.dataset.val;if(navigator.clipboard)navigator.clipboard.writeText(v).then(function(){toast('Copied '+v)},function(){toast(v)});else toast(v)}
+  else if(a==='editMusic')musicForm();
+  else if(a==='export')exportAll();
+  else if(a==='import')importBackup();
+  else if(a==='signout'){sb.auth.signOut().then(function(){location.hash='';location.reload()})}
+});
+app.addEventListener('submit',function(e){
+  var f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();var k=f.dataset.form,fd=new FormData(f),t=curTrip();
+  if(k==='todo'){var v=document.getElementById('todoIn').value.trim();if(!v)return;create('todos',{text:v,done:false,created:Date.now()});render();var i=document.getElementById('todoIn');if(i)i.focus()}
+  if(k==='item'){var title=(fd.get('title')||'').trim();if(!title)return;var days=tripDays(t).map(function(d){return{title:d.title||'',items:(d.items||[]).slice()}}),di=+f.dataset.i;days[di].items.push({id:uid(),time:fd.get('time')||'',title:title,where:(fd.get('where')||'').trim()});tripPatch(t,{days:days});render()}
+  if(k==='booking'){tripPatch(t,{bookings:(t.bookings||[]).concat([{id:uid(),kind:fd.get('kind'),title:fd.get('title').trim(),detail:(fd.get('detail')||'').trim(),ref:(fd.get('ref')||'').trim()}])});render()}
+  if(k==='pack'){var tx=(fd.get('text')||'').trim();if(!tx)return;tripPatch(t,{packing:(t.packing||[]).concat([{id:uid(),text:tx,done:false}])});render();var p=app.querySelector('form[data-form="pack"] input');if(p)p.focus()}
+  if(k==='place'){tripPatch(t,{places:(t.places||[]).concat([{id:uid(),name:fd.get('name').trim(),kind:(fd.get('kind')||'').trim(),day:fd.get('day')||''}])});render()}
+});
+app.addEventListener('input',function(e){
+  var el=e.target;
+  if(el.isContentEditable||el.closest('[data-editor]')){var ed=el.closest('[data-editor]');debounce('ed:'+ed.dataset.id,function(){saveEditor(ed)},1000);return}
+  var fld=el.dataset.field;if(!fld)return;
+  if(fld==='day.title'){var t=curTrip(),i=+el.dataset.i;debounce('day'+i,function(){var days=tripDays(t).map(function(d){return{title:d.title||'',items:(d.items||[]).slice()}});days[i].title=el.value;patch('trips',t.id,{days:days})},800);return}
+  var p=fld.split('.'),col=p[0],key=p[1],id=el.dataset.id;debounce(fld+id,function(){var o={};o[key]=el.value.trim();patch(col,id,o)},800);
+});
+app.addEventListener('focusout',function(e){if(e.target.closest&&(e.target.closest('[data-editor]')||e.target.dataset.field))flush();setTimeout(function(){if(dirtyWhileEditing&&!editing()){dirtyWhileEditing=false;render()}},50)});
+function saveEditor(ed){var cl=ed.cloneNode(true);cl.querySelectorAll('img[data-sb]').forEach(function(im){im.setAttribute('src',im.getAttribute('data-sb'));im.removeAttribute('data-sb')});var html=sanitize(cl.innerHTML);if(!ed.textContent.replace(/\u200b/g,'').trim()&&!ed.querySelector('img'))html='';if(html.length>240000){toast('This note is getting very long. Start a new one soon.')}patch(ed.dataset.editor,ed.dataset.id,{notesHtml:html,updated:Date.now()})}
+
+/* rich text commands */
+function runCmd(b){
+  var ed=app.querySelector('.editor');if(!ed)return;ed.focus();var c=b.dataset.cmd,v=b.dataset.val;
+  try{document.execCommand('styleWithCSS',false,true)}catch(e){}
+  if(c==='bold'||c==='italic'||c==='underline')document.execCommand(c);
+  else if(c==='h2'){var blk=document.queryCommandValue('formatBlock');document.execCommand('formatBlock',false,/h2/i.test(blk)?'P':'H2')}
+  else if(c==='ul')document.execCommand('insertUnorderedList');
+  else if(c==='check')document.execCommand('insertHTML',false,'<ul class="checklist"><li data-checked="false">&#8203;</li></ul>');
+  else if(c==='callout'){var sel=window.getSelection().toString();document.execCommand('insertHTML',false,'<div class="callout">'+(esc(sel)||'Note')+'</div><p><br></p>')}
+  else if(c==='link'){linkForm(ed);return}
+  else if(c==='color')document.execCommand('foreColor',false,v==='inherit'?getComputedStyle(document.body).color:v);
+  else if(c==='hilite')document.execCommand('hiliteColor',false,v);
+  else if(c==='clear')document.execCommand('removeFormat');
+  else if(c==='image'){var range=saveRange();pickFile('image/*',function(f){upload(f).then(function(u){restoreRange(range);ed.focus();document.execCommand('insertHTML',false,'<img src="'+esc(rs(u))+'" data-sb="'+esc(u)+'" alt=""><p><br></p>');saveEditor(ed)})});return}
+  saveEditor(ed);
+}
+function saveRange(){var s=window.getSelection();return s.rangeCount?s.getRangeAt(0).cloneRange():null}
+function restoreRange(r){if(!r)return;var s=window.getSelection();s.removeAllRanges();s.addRange(r)}
+document.addEventListener('mousedown',function(e){if(e.target.closest('[data-cmd]'))e.preventDefault()});
+
+/* ---------- modals ---------- */
+function modal(html,onSubmit){var bg=document.createElement('div');bg.className='modal-bg';bg.innerHTML='<form class="modal fade" role="dialog" aria-modal="true">'+html+'</form>';document.body.appendChild(bg);var f=bg.querySelector('form');var first=f.querySelector('input,select,textarea,button');if(first)first.focus();
+  function close(){bg.remove();document.removeEventListener('keydown',kd)}function kd(e){if(e.key==='Escape')close()}document.addEventListener('keydown',kd);
+  bg.addEventListener('click',function(e){if(e.target===bg||e.target.closest('[data-close]'))close()});f.addEventListener('submit',function(e){e.preventDefault();if(onSubmit(new FormData(f))!==false)close()});}
+function confirmBox(msg,yes){modal('<h2 class="h2" style="font-size:22px">Are you sure?</h2><p class="muted">'+esc(msg)+'</p><div class="row" style="justify-content:flex-end;margin-top:18px"><button type="button" class="btn" data-close>Cancel</button><button class="btn dark" style="background:#9E5638;border-color:#9E5638">Delete</button></div>',function(){yes()});return true}
+function tripForm(t){
+  modal('<h2 class="h2" style="font-size:24px">'+(t?'Edit trip':'New trip')+'</h2><label class="f" for="tf1">Destination</label><input id="tf1" class="input" name="name" required value="'+esc(t?t.name:'')+'" placeholder="Paris">'+
+  '<div class="row" style="gap:10px"><div style="flex:1"><label class="f" for="tf2">Start</label><input id="tf2" class="input" type="date" name="start" value="'+esc(t?t.start||'':'')+'"></div><div style="flex:1"><label class="f" for="tf3">End</label><input id="tf3" class="input" type="date" name="end" value="'+esc(t?t.end||'':'')+'"></div></div>'+
+  '<label class="f" for="tf4">Status</label><select id="tf4" class="input" name="status">'+['Planning','Booked','Bucket list','Done'].map(function(s){return '<option'+((t?t.status:'Planning')===s?' selected':'')+'>'+s+'</option>'}).join('')+'</select>'+
+  '<p id="tfErr" class="muted" role="alert" style="color:#9E5638;min-height:20px;margin:10px 0 0;font-size:13px"></p><div class="row" style="justify-content:flex-end;margin-top:8px"><button type="button" class="btn" data-close>Cancel</button><button class="btn dark">'+(t?'Save':'Create trip')+'</button></div>',
+  function(fd){var d={name:fd.get('name').trim(),start:fd.get('start')||'',end:fd.get('end')||'',status:fd.get('status')};
+    if(d.start&&d.end&&d.end<d.start){document.getElementById('tfErr').textContent='The end date is before the start date.';return false}
+    if(d.start&&!d.end)d.end=d.start;
+    if(t){patch('trips',t.id,d)}else{d.days=[];d.bookings=[];d.packing=[];d.places=[];d.inspo=[];d.notesHtml='';ui.tripId=create('trips',d);ui.tripTab='plan';saveUi()}
+    go('trip');}
+  );
+}
+function musicForm(){var s=S.settings;modal('<h2 class="h2" style="font-size:24px">Your playlist</h2><p class="muted" style="font-size:14px;margin:6px 0 0">In Spotify: Share, then Copy link to playlist.</p><label class="f" for="mf1">Spotify link</label><input id="mf1" class="input" name="url" value="'+esc(s.playlistUrl||'')+'" placeholder="https://open.spotify.com/playlist/…"><label class="f" for="mf2">Name</label><input id="mf2" class="input" name="name" value="'+esc(s.playlistName||'')+'"><label class="f" for="mf3">Artists</label><input id="mf3" class="input" name="artists" value="'+esc(s.artists||'')+'"><div class="row" style="justify-content:flex-end;margin-top:18px"><button type="button" class="btn" data-close>Cancel</button><button class="btn dark">Save</button></div>',function(fd){var d={playlistUrl:fd.get('url').trim(),playlistName:fd.get('name').trim(),artists:fd.get('artists').trim()};Object.assign(S.settings,d);write('settings','main',d,false);render()})}
+function linkForm(ed){var r=saveRange();modal('<h2 class="h2" style="font-size:22px">Add a link</h2><label class="f" for="lf1">Link</label><input id="lf1" class="input" name="url" placeholder="https://…" required><div class="row" style="justify-content:flex-end;margin-top:18px"><button type="button" class="btn" data-close>Cancel</button><button class="btn dark">Add</button></div>',function(fd){restoreRange(r);ed.focus();var u=safeUrl(fd.get('url'));if(window.getSelection().toString())document.execCommand('createLink',false,u);else document.execCommand('insertHTML',false,'<a href="'+esc(u)+'">'+esc(u)+'</a>&nbsp;');saveEditor(ed)})}
+
+/* ---------- export ---------- */
+function exportAll(){
+  var out='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Notes export</title><style>body{font-family:Georgia,serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.6}h1{font-size:32px}h2{margin-top:40px}h3{margin-top:28px}.callout{background:#EEF1E6;padding:12px;border-radius:8px}img{max-width:100%}</style></head><body><h1>Notes export, '+new Date().toLocaleDateString('en-GB')+'</h1>';
+  S.courses.slice().sort(byOrder).forEach(function(c){out+='<h2>'+esc(c.title)+'</h2>';courseMods(c.id).forEach(function(m){out+='<h3>'+esc(m.title)+(m.done?' (done)':'')+'</h3>'+(m.lectureUrl?'<p>Lecture: '+esc(m.lectureUrl)+'</p>':'')+(m.slidesUrl?'<p>Slides: '+esc(m.slidesUrl)+'</p>':'')+(sanitize(m.notesHtml)||'<p><i>No notes</i></p>')})});
+  out+='<h2>Interests</h2>';S.topics.forEach(function(t){out+='<h3>'+esc(t.name)+'</h3>'+(sanitize(t.notesHtml)||'')});
+  out+='<h2>Trips</h2>';S.trips.forEach(function(t){out+='<h3>'+esc(t.name)+'</h3>'+(sanitize(t.notesHtml)||'')+((t.bookings||[]).length?'<ul>'+t.bookings.map(function(b){return '<li>'+esc(b.kind+': '+b.title+' '+(b.detail||'')+' '+(b.ref||''))+'</li>'}).join('')+'</ul>':'')});
+  out+='</body></html>';
+  dl('notes-export-'+today()+'.html',out,'text/html');
+  setTimeout(function(){dl('dashboard-backup-'+today()+'.json',JSON.stringify(S,null,1),'application/json')},400);
+  toast('Downloaded your notes and a full backup');
+}
+function dl(name,data,type){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1000)}
+function importBackup(){var f=document.getElementById('importPick');f.value='';f.onchange=function(){var file=f.files[0];if(!file)return;file.text().then(function(t){var d=JSON.parse(t);var cols=['todos','courses','modules','trips','topics'];var rows=[];if(d.settings)rows.push({user_id:user.id,col:'settings',id:'main',data:d.settings});cols.forEach(function(c){(d[c]||[]).forEach(function(x){var b=Object.assign({},x);delete b.id;rows.push({user_id:user.id,col:c,id:x.id,data:b})})});return sb.from('docs').upsert(rows)}).then(function(r){if(r&&r.error)throw r.error;toast('Backup restored');loadAll()}).catch(function(){toast('That file isn\'t a dashboard backup.')})};f.click()}
+
+/* ---------- data ---------- */
+var COLS=['todos','courses','modules','trips','topics'];
+var SEED=(function(){
+  var C=[['c1','Course 1: Beginning Cosmetic Chemistry','Beginning Cosmetic Chemistry','img/dna.jpg'],['c2','Course 2: Fundamentals of Skin Science','Fundamentals of Skin Science',''],['c3','Course 3: Cosmetic Formulations (Online)','Cosmetic Formulations',''],['c4','Elective: Advanced Skin Science','Advanced Skin Science',''],['c5','Elective: Cosmetic Product Development, Skin Care','Product Development: Skin Care',''],['c6','Elective: Fundamentals of Microbiome for the Cosmetics Industry','Microbiome for Cosmetics','img/leaves.jpg']];
+  var rows=[{col:'settings',id:'main',data:{programName:'Skin Care Science 2026–2027',playlistName:'Evening mix',artists:'Boy In Space, Shy Martin, Chelsea Cutler, Noah Kahan, Asiris',playlistUrl:'',musicImage:'img/pianowin.jpg',defaultTrip:'img/seine.jpg'}}];
+  C.forEach(function(c,i){rows.push({col:'courses',id:c[0],data:{order:i+1,title:c[1],short:c[2],cover:c[3]}});for(var m=1;m<=6;m++)rows.push({col:'modules',id:c[0]+'m'+m,data:{courseId:c[0],order:m,title:'Module '+m,done:false,lectureUrl:'',slidesUrl:'',notesHtml:''}})});
+  [['t1','Interior design','img/bedroom.jpg'],['t2','Style inspo','img/stripes.jpg'],['t3','Biotech','img/dna.jpg'],['t4','Piano','img/pianosun.jpg']].forEach(function(t,i){rows.push({col:'topics',id:t[0],data:{order:i+1,name:t[1],cover:t[2],notesHtml:''}})});
+  function it(id,time,title,where){return{id:id,time:time,title:title,where:where}}
+  rows.push({col:'trips',id:'paris',data:{name:'Paris',start:'2026-11-29',end:'2026-12-04',status:'Booked',cover:'img/eiffel.jpg',
+    notesHtml:'<p>Ask about the <b>rooftop</b> at the hotel. Pack layers, <span style="background-color:#DCE8EC">mornings are cold</span>.</p><p><i>Keep one full day with no plans.</i></p>',
+    days:[{title:'Arrive, walk the Seine',items:[it('p1a','15:00','Check in','[Hotel name], Paris'),it('p1b','17:00','Walk along the quais','Quai de la Tournelle, Paris')]},{title:'Museums and the canal',items:[it('p2a','10:30','Canal Saint-Martin walk','Canal Saint-Martin, Paris'),it('p2b','14:30','Musée de l’Orangerie',"Musée de l'Orangerie, Paris"),it('p2c','17:00','Shakespeare and Company','Shakespeare and Company, Paris'),it('p2d','20:00','Dinner reservation','[Restaurant], Paris')]},{title:'Cafés and markets',items:[it('p3a','10:00','Morning market','Marché des Enfants Rouges, Paris'),it('p3b','21:00','Piano bar','Le Marais, Paris')]},{title:'Slow day',items:[]},{title:'',items:[]},{title:'Fly home',items:[it('p6a','','Flight home [XX 123]','Paris Charles de Gaulle Airport')]}],
+    bookings:[{id:'pb1',kind:'Flight',title:'TLV to CDG',detail:'[Date, time, seat]',ref:'[ABC123]'},{id:'pb2',kind:'Stay',title:'[Hotel name]',detail:'5 nights, breakfast',ref:'[Confirmation]'},{id:'pb3',kind:'Flight',title:'CDG to TLV',detail:'[Date, time, seat]',ref:'[ABC123]'}],
+    packing:['Passport','Phone charger','Travel adapter','Walking shoes','Rain jacket','Warm layers','Camera','Book for the flight'].map(function(x,i){return{id:'k'+i,text:x,done:false}}),
+    places:[{id:'pl1',name:"Musée de l'Orangerie",kind:'Museum',day:'2'},{id:'pl2',name:'Canal Saint-Martin',kind:'Walk',day:'2'},{id:'pl3',name:'Shakespeare and Company',kind:'Bookshop',day:'2'},{id:'pl4',name:'Marché des Enfants Rouges',kind:'Market',day:'3'}],
+    inspo:[{url:'img/seine.jpg'},{url:'img/akari.jpg'},{url:'img/gallery.jpg'},{url:'img/pianowin.jpg'},{url:'img/balcony.jpg'}]}});
+  [['madrid','Madrid','Planning','img/madrid.jpg'],['dive','Dive trip','Bucket list','img/scuba.jpg'],['island','Island nights','Bucket list','img/hammock.jpg']].forEach(function(t){rows.push({col:'trips',id:t[0],data:{name:t[1],start:'',end:'',status:t[2],cover:t[3],notesHtml:'',days:[],bookings:[],packing:[],places:[],inspo:[]}})});
+  return rows;
+})();
+
+function loginView(msg,mode){
+  mode=mode||'in';
+  app.innerHTML='<main class="page"><div class="wrap" style="max-width:440px"><div class="card fade" style="margin-top:8vh"><h1 class="serif" style="font-size:38px;font-weight:400;margin-bottom:6px">'+(mode==='in'?'Welcome back':'Create your account')+'</h1><p class="muted" style="margin:0 0 8px">'+(mode==='in'?'Sign in to your dashboard.':'One time only. Use an email you can check.')+'</p>'+
+  '<form id="authForm"><label class="f" for="aE">Email</label><input id="aE" class="input" type="email" name="email" autocomplete="email" required><label class="f" for="aP">Password</label><input id="aP" class="input" type="password" name="password" autocomplete="'+(mode==='in'?'current-password':'new-password')+'" minlength="8" required>'+
+  '<p id="aMsg" role="alert" style="min-height:22px;margin:12px 0 0;font-size:14px;color:'+(msg&&msg.ok?'var(--olive)':'#9E5638')+'">'+esc(msg?msg.text:'')+'</p><button class="btn dark" style="width:100%;justify-content:center;margin-top:8px">'+(mode==='in'?'Sign in':'Create account')+'</button></form>'+
+  '<p class="muted" style="text-align:center;margin:16px 0 0;font-size:14px">'+(mode==='in'?'First time? <button class="btn sm ghost" id="aSwitch">Create account</button>':'Already have one? <button class="btn sm ghost" id="aSwitch">Sign in</button>')+'</p></div></div></main>';
+  document.getElementById('aSwitch').onclick=function(){loginView(null,mode==='in'?'up':'in')};
+  document.getElementById('authForm').onsubmit=function(e){e.preventDefault();var fd=new FormData(e.target),em=fd.get('email').trim(),pw=fd.get('password');var m=document.getElementById('aMsg');m.style.color='var(--muted)';m.textContent='One moment…';
+    var p=mode==='in'?sb.auth.signInWithPassword({email:em,password:pw}):sb.auth.signUp({email:em,password:pw});
+    p.then(function(r){if(r.error){m.style.color='#9E5638';m.textContent=r.error.message==='Invalid login credentials'?'Wrong email or password.':r.error.message;return}
+      if(mode==='up'&&!r.data.session){loginView({ok:1,text:'Check your email and click the confirmation link, then sign in here.'},'in');return}
+      user=r.data.user;start()})};
+}
+function start(){app.innerHTML='<div class="wrap" style="padding-top:80px"><p class="muted">Loading your dashboard…</p></div>';loadAll().then(subscribe)}
+var started=false;
+function loadAll(){
+  return sb.from('docs').select('col,id,data').limit(5000).then(function(r){
+    if(r.error){app.innerHTML='<div class="wrap" style="padding-top:80px"><p class="muted">Couldn\'t load your data: '+esc(r.error.message)+'. Check the setup script ran, then refresh.</p></div>';return}
+    if(!r.data.length){return sb.from('docs').upsert(SEED.map(function(x){return{user_id:user.id,col:x.col,id:x.id,data:x.data}})).then(function(r2){if(r2.error){toast('Setup failed: '+r2.error.message);return}return loadAll()})}
+    var N={settings:{},todos:[],courses:[],modules:[],trips:[],topics:[]};
+    r.data.forEach(function(row){if(row.col==='settings')N.settings=row.data||{};else if(N[row.col])N[row.col].push(Object.assign({id:row.id},row.data))});
+    S=N;loaded.courses=1;scanRefs();
+    if(!started){started=true;var at=activeTrip();if(at&&!location.hash&&window.innerWidth<700){ui.tmId=at.id;location.hash='tripmode';return}}
+    softRender();
+  });
+}
+var pendingPath={};
+function subscribe(){
+  if(!user)return;
+  sb.channel('docs-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'docs',filter:'user_id=eq.'+user.id},function(p){
+    var row=p.eventType==='DELETE'?p.old:p.new;if(!row||!row.col)return;var path=row.col+'/'+row.id;if(pendingPath[path])return;
+    if(row.col==='settings'){if(p.eventType!=='DELETE')S.settings=row.data||{}}
+    else if(S[row.col]){S[row.col]=S[row.col].filter(function(x){return x.id!==row.id});if(p.eventType!=='DELETE')S[row.col].push(Object.assign({id:row.id},row.data))}
+    scanRefs();softRender();
+  }).subscribe();
+  document.addEventListener('visibilitychange',function(){if(!document.hidden&&!editing()&&!pending)loadAll()});
+}
+function boot(){
+  if(!window.supabase){app.innerHTML='<div class="wrap" style="padding-top:80px"><p class="muted">Couldn\'t load. Check your internet connection and refresh.</p></div>';return}
+  sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  sb.auth.getSession().then(function(r){var s0=r.data&&r.data.session;if(s0){user=s0.user;start()}else loginView()});
+}
+
+setInterval(function(){var c=document.getElementById('clk');if(c)c.innerHTML=clockHtml()},15000);
+boot();
+})();
+</script>
+</body>
+</html>
