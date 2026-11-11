@@ -36,7 +36,8 @@ h1,h2,h3{margin:0;font-weight:500}
 .p-olive{background:#E8ECDD;color:#3D4A26}.p-gold{background:#F8EBD3;color:#6E4B12}.p-sea{background:#E3EDF2;color:#1C3B4D}.p-clay{background:#F3E1D5;color:#7A3E24}.p-grey{background:#EFE6D6;color:#5A4E42}
 .input{height:42px;border-radius:12px;border:1px solid var(--line);background:var(--soft);padding:0 14px;width:100%;min-width:0}
 textarea.input{height:auto;padding:10px 14px;resize:vertical}
-.input:focus,.editor:focus{outline:2px solid var(--clay);outline-offset:1px}
+.input:focus{outline:2px solid var(--clay);outline-offset:1px}
+.editor:focus{outline:none}
 button:focus-visible,a:focus-visible{outline:2px solid var(--clay);outline-offset:2px}
 .lift{transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s}
 .lift:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
@@ -75,9 +76,20 @@ main.page{padding:32px 0 80px}
 .tool:hover{background:var(--soft2)}
 .swatch{width:22px;height:22px;border-radius:50%;border:2px solid var(--card);outline:1px solid var(--line);padding:0;margin:0 2px}
 .swatch.sq{border-radius:6px}
-.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:6px;border-radius:14px;background:var(--card);border:1px solid var(--line);position:sticky;top:72px;z-index:3;box-shadow:0 6px 18px rgba(36,31,26,.08)}
+.toolbar{display:none;flex-wrap:wrap;align-items:center;gap:2px;padding:4px;border-radius:12px;background:var(--card);border:1px solid var(--line);position:sticky;top:78px;z-index:3;margin-bottom:14px}
+body.fmt .toolbar{display:flex}
+.pg-list{margin:2px 0 8px 21px;padding-left:12px;border-left:1.5px solid var(--line);display:flex;flex-direction:column;gap:1px}
+.pg{display:flex;align-items:center;gap:8px;text-align:left;padding:7px 10px;border-radius:10px;border:none;background:transparent;color:var(--muted);font-size:13.5px;width:100%}
+.pg:hover{background:var(--soft)}.pg.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--line)}
+.btn.done-on{background:var(--olive);border-color:var(--olive);color:#FFF6EC}
+.ed-head{display:flex;justify-content:flex-end;margin-bottom:8px}
+.fmt-btn{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:13px;display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+body.fmt .fmt-btn{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.title-in{width:100%;border:none;border-bottom:1.5px dashed transparent;background:transparent;padding:0 0 4px;border-radius:0;transition:border-color .2s}
+.title-in:hover{border-bottom-color:var(--line)}
+.title-in:focus{outline:none;border-bottom-color:var(--clay)}
 .sep{width:1px;height:22px;background:var(--line);margin:0 6px}
-.editor{min-height:320px;font-family:Fraunces,Georgia,serif;font-size:18px;line-height:1.75;padding:8px 2px;outline:none}
+.editor{min-height:320px;font-family:Fraunces,Georgia,serif;font-size:18px;line-height:1.75;padding:4px 0 8px;outline:none}
 .editor:empty:before{content:attr(data-ph);color:var(--muted)}
 .editor h2{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:600;margin:22px 0 8px}
 .editor h3{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:600;margin:18px 0 6px}
@@ -112,12 +124,13 @@ label.f{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
 <script>
 (function(){
 'use strict';
-var S={settings:{},todos:[],courses:[],modules:[],trips:[],topics:[]};
+var S={settings:{},todos:[],courses:[],modules:[],pages:[],trips:[],topics:[]};
 var SB_URL='https://mtoxdstdgubeqbcsggrs.supabase.co',SB_KEY='sb_publishable_OGAJCWEyVOaq3LCNAGx_cQ_gi8NHu8b';
 var sb=null,user=null,offline=false,loaded={};var signed={},signing={};
 var ui={};try{ui=JSON.parse(localStorage.getItem('dash-ui')||'{}')}catch(e){}
 function saveUi(){try{localStorage.setItem('dash-ui',JSON.stringify(ui))}catch(e){}}
 if(ui.dark)document.body.classList.add('dark');
+if(ui.fmt)document.body.classList.add('fmt');
 var app=document.getElementById('app');
 
 /* ---------- helpers ---------- */
@@ -192,6 +205,8 @@ window.addEventListener('hashchange',function(){flush();render();window.scrollTo
 /* ---------- derived ---------- */
 function program(){var mods=S.modules,done=mods.filter(function(m){return m.done}).length;return{total:mods.length,done:done}}
 function courseMods(cid){return S.modules.filter(function(m){return m.courseId===cid}).sort(byOrder)}
+function modPages(mid){return S.pages.filter(function(p){return p.moduleId===mid}).sort(byOrder)}
+function ensurePage(m){var ps=modPages(m.id);if(ps.length)return ps;create('pages',{moduleId:m.id,order:1,title:'Lecture notes',notesHtml:m.notesHtml||'',updated:m.updated||0});return modPages(m.id)}
 function nextModule(){var cs=S.courses.slice().sort(byOrder);for(var i=0;i<cs.length;i++){var ms=courseMods(cs[i].id);for(var j=0;j<ms.length;j++)if(!ms[j].done)return{c:cs[i],m:ms[j]}}return null}
 function upcomingTrips(){var t=today();return S.trips.filter(function(x){return x.status!=='Bucket list'&&x.end&&x.end>=t}).sort(function(a,b){return (a.start||'')<(b.start||'')?-1:1})}
 function activeTrip(){var t=today();return S.trips.filter(function(x){return x.start&&x.end&&x.status!=='Bucket list'&&daysBetween(t,x.start)<=2&&x.end>=t}).sort(function(a,b){return a.start<b.start?-1:1})[0]||null}
@@ -199,7 +214,7 @@ function tripDays(tr){if(!tr.start||!tr.end)return tr.days||[];var n=daysBetween
 function statusPill(s){var m={'Booked':'p-olive','Planning':'p-gold','Bucket list':'p-sea','Done':'p-grey'};return '<span class="pill '+(m[s]||'p-grey')+'">'+esc(s||'Planning')+'</span>'}
 
 /* ---------- views ---------- */
-var I={moon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
+var I={page:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>',moon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
 sun:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
 tick:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFF6EC" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>',
 x:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
@@ -250,8 +265,8 @@ function viewHome(){
   '<div style="flex:1;min-width:200px"><h2 class="h2" style="margin-bottom:4px">Courses</h2><p class="muted" style="margin:0 0 8px;font-size:14px">'+esc(S.settings.programName||'Skin Care Science')+', '+p.done+' of '+p.total+' modules done</p><div class="bar"><span style="width:'+(p.total?Math.round(p.done/p.total*100):0)+'%"></span></div></div>'+
   (nm?'<button class="btn dark press" data-act="openModule" data-id="'+esc(nm.m.id)+'">Continue</button>':'')+'</div>';
   if(nm)h+='<button class="row press" data-act="openModule" data-id="'+esc(nm.m.id)+'" style="width:100%;text-align:left;border:none;background:var(--soft);border-radius:14px;padding:14px 16px;margin-bottom:12px"><span style="flex:1;min-width:0"><span class="muted" style="display:block;font-size:12px">Up next</span><span style="display:block;font-weight:500">'+esc(nm.c.title)+'</span><span class="muted" style="font-size:13px">'+esc(nm.m.title)+'</span></span><span class="pill p-olive">Open</span></button>';
-  var recent=S.modules.filter(function(m){return m.notesHtml&&m.updated}).sort(function(a,b){return b.updated-a.updated}).slice(0,3);
-  h+=recent.length?recent.map(function(m){var c=find('courses',m.courseId);return '<button class="row press" data-act="openModule" data-id="'+esc(m.id)+'" style="width:100%;text-align:left;border:none;border-top:1px solid var(--line);background:transparent;padding:12px 4px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">'+esc(m.title)+'</span><span class="muted" style="font-size:13px">'+esc(c?c.short||c.title:'')+'</span></span><span class="muted" style="font-size:13px">'+new Date(m.updated).toLocaleDateString('en-GB',{day:'numeric',month:'short'})+'</span></button>'}).join(''):'<p class="muted" style="margin:4px 2px 0;font-size:14px">Your latest notes will show here.</p>';
+  var recent=S.pages.filter(function(q){return q.notesHtml&&q.updated&&find('modules',q.moduleId)}).sort(function(a,b){return b.updated-a.updated}).slice(0,3);
+  h+=recent.length?recent.map(function(q){var m=find('modules',q.moduleId),c=find('courses',m.courseId);return '<button class="row press" data-act="openPage" data-id="'+esc(q.id)+'" style="width:100%;text-align:left;border:none;border-top:1px solid var(--line);background:transparent;padding:12px 4px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">'+esc(q.title||'Untitled page')+'</span><span class="muted" style="font-size:13px">'+esc(m.title)+', '+esc(c?c.short||c.title:'')+'</span></span><span class="muted" style="font-size:13px">'+new Date(q.updated).toLocaleDateString('en-GB',{day:'numeric',month:'short'})+'</span></button>'}).join(''):'<p class="muted" style="margin:4px 2px 0;font-size:14px">Your latest notes will show here.</p>';
   h+='</section>';
   // music
   var st=S.settings;
@@ -286,28 +301,32 @@ function toolbar(){
   marks.map(function(c){return '<button class="swatch sq" data-cmd="hilite" data-val="'+c[1]+'" style="background:'+c[1]+'" aria-label="'+c[0]+' highlight"></button>'}).join('')+
   '<button class="tool" data-cmd="clear" aria-label="Clear formatting" style="font-size:13px">Clear</button></div>';
 }
-function editor(col,id,ph){return toolbar()+'<div class="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Notes" data-editor="'+col+'" data-id="'+esc(id)+'" data-ph="'+esc(ph)+'"></div>'}
+function fmtBtn(){return '<button type="button" class="fmt-btn press" data-act="fmt" aria-pressed="'+(!!ui.fmt)+'" title="Show or hide the formatting bar"><span class="serif" style="font-size:15px">Aa</span>'+(ui.fmt?'Hide formatting':'Formatting')+'</button>'}
+function editor(col,id,ph,noHead){return (noHead?'':'<div class="ed-head"><button type="button" class="fmt-btn press" data-act="fmt" aria-pressed="'+(!!ui.fmt)+'" title="Show or hide the formatting bar"><span class="serif" style="font-size:15px">Aa</span>'+(ui.fmt?'Hide formatting':'Formatting')+'</button></div>')+toolbar()+'<div class="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Notes" data-editor="'+col+'" data-id="'+esc(id)+'" data-ph="'+esc(ph)+'"></div>'}
 
 function viewCourses(){
   var cs=S.courses.slice().sort(byOrder);
   if(!cs.length)return '<main class="page"><div class="wrap"><div class="empty">No courses yet.</div></div></main>';
   var cid=ui.courseId&&find('courses',ui.courseId)?ui.courseId:cs[0].id,c=find('courses',cid),ms=courseMods(cid);
   var mid=ui.moduleId&&find('modules',ui.moduleId)&&find('modules',ui.moduleId).courseId===cid?ui.moduleId:(ms[0]&&ms[0].id),m=mid&&find('modules',mid);
+  var pgs=m?ensurePage(m):[],pid=ui.pageId&&pgs.some(function(q){return q.id===ui.pageId})?ui.pageId:(pgs[0]&&pgs[0].id),pg=pid&&find('pages',pid),pi=pgs.indexOf(pg);
   var h='<main class="page"><div class="wrap" style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">'+
   '<aside class="fade" style="flex:1 1 280px;max-width:340px;min-width:0;display:flex;flex-direction:column;gap:20px"><div><p class="muted" style="margin:0 0 4px;font-size:13px;font-weight:600">'+esc(S.settings.programName||'Program')+'</p><h1 class="serif" style="font-size:30px;font-weight:400;margin-bottom:12px">Your courses</h1><div style="display:flex;flex-direction:column;gap:6px">'+
   cs.map(function(x){var mm=courseMods(x.id),d=mm.filter(function(k){return k.done}).length;return '<button class="side-item press'+(x.id===cid?' on':'')+'" data-act="pickCourse" data-id="'+esc(x.id)+'">'+(x.cover?img(x.cover,'','width:46px;height:46px;border-radius:12px;object-fit:cover;flex:none'):'<span style="width:46px;height:46px;border-radius:12px;background:var(--soft2);flex:none"></span>')+'<span style="flex:1;min-width:0"><span style="display:block;font-size:14px;font-weight:500;line-height:1.3">'+esc(x.short||x.title)+'</span><span class="bar" style="display:block;height:5px;margin:6px 0 3px"><span style="width:'+(mm.length?Math.round(d/mm.length*100):0)+'%"></span></span><span class="muted" style="font-size:12px">'+d+' of '+mm.length+' modules</span></span></button>'}).join('')+
   '</div></div><div><div class="row between" style="margin-bottom:8px"><h2 style="font-size:13px;font-weight:600" class="muted">Modules</h2><button class="btn sm press" data-act="addModule" data-id="'+esc(cid)+'">Add module</button></div><div style="display:flex;flex-direction:column;gap:2px">'+
-  ms.map(function(x,i){return '<button class="mod press'+(x.id===mid?' on':'')+'" data-act="pickModule" data-id="'+esc(x.id)+'"><span class="box'+(x.done?' on':'')+'" style="width:18px;height:18px">'+(x.done?I.tick:'')+'</span><span style="flex:1;min-width:0;font-size:14px">'+esc(x.title)+'</span>'+(x.notesHtml?'<span class="muted" style="font-size:12px">notes</span>':'')+'</button>'}).join('')+'</div></div></aside>';
+  ms.map(function(x,i){var on=x.id===mid,xp=modPages(x.id),n=xp.length||1;var r='<button class="mod press'+(on?' on':'')+'" data-act="pickModule" data-id="'+esc(x.id)+'"><span class="box'+(x.done?' on':'')+'" style="width:18px;height:18px">'+(x.done?I.tick:'')+'</span><span style="flex:1;min-width:0;font-size:14px">'+esc(x.title||'Untitled module')+'</span><span class="muted" style="font-size:12px">'+n+(n===1?' page':' pages')+'</span></button>';
+    if(on)r+='<div class="pg-list">'+pgs.map(function(q){return '<button class="pg press'+(q.id===pid?' on':'')+'" data-act="pickPage" data-id="'+esc(q.id)+'">'+I.page+'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(q.title||'Untitled page')+'</span></button>'}).join('')+'<button class="pg press" data-act="addPage" data-id="'+esc(x.id)+'" style="color:var(--muted)">+ New page</button></div>';
+    return r}).join('')+'</div></div></aside>';
   h+='<section class="card fade" style="flex:999 1 560px;min-width:0;padding:0;overflow:hidden">';
   if(m){
     h+='<div style="position:relative;height:180px;background:var(--soft2);overflow:hidden">'+img(c.cover,'','width:100%;height:100%;object-fit:cover')+'<button class="btn sm press" data-act="courseCover" data-id="'+esc(cid)+'" style="position:absolute;right:16px;bottom:16px;background:rgba(255,246,236,.92);color:#241F1A;border:none">Change cover</button></div>'+
-    '<div style="padding:24px 32px 40px;max-width:820px;margin:0 auto"><p class="muted" style="margin:0 0 6px;font-size:13px">'+esc(c.title)+'</p>'+
-    '<label for="mTitle" style="position:absolute;left:-9999px">Module title</label><input id="mTitle" class="serif" data-field="modules.title" data-id="'+esc(m.id)+'" value="'+esc(m.title)+'" style="width:100%;border:none;background:transparent;font-size:clamp(28px,4vw,40px);font-weight:400;padding:0;margin-bottom:16px">'+
-    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:22px">'+
+    '<div style="padding:32px clamp(24px,4vw,48px) 48px;max-width:880px;margin:0 auto"><p class="muted" style="margin:0 0 6px;font-size:13px">'+esc(c.title)+'</p>'+
+    '<label for="mTitle" style="position:absolute;left:-9999px">Module name</label><input id="mTitle" class="serif title-in" data-field="modules.title" data-id="'+esc(m.id)+'" value="'+esc(m.title)+'" placeholder="Name this module" title="Click to rename" style="font-size:clamp(28px,4vw,40px);font-weight:400;margin-bottom:6px"><div class="row" style="margin:0 0 22px;gap:12px;flex-wrap:wrap"><p class="muted" style="margin:0;flex:1;font-size:13px">Click the title to rename this module.</p><button class="btn sm press'+(m.done?' done-on':'')+'" data-act="modDone" data-id="'+esc(m.id)+'" aria-pressed="'+(!!m.done)+'">'+(m.done?'Module done':'Mark module done')+'</button></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">'+
      '<div style="background:var(--soft);border-radius:14px;padding:14px"><div class="row between"><span style="font-weight:600;font-size:14px">Lecture</span>'+(m.lectureUrl?'<a class="btn sm dark" href="'+esc(safeUrl(m.lectureUrl))+'" target="_blank" rel="noopener">Open</a>':'')+'</div><label class="f" for="mLec">Link to the lecture</label><input id="mLec" class="input" data-field="modules.lectureUrl" data-id="'+esc(m.id)+'" value="'+esc(m.lectureUrl||'')+'" placeholder="Paste the lecture link"></div>'+
      '<div style="background:var(--soft);border-radius:14px;padding:14px"><div class="row between"><span style="font-weight:600;font-size:14px">Slides</span>'+(m.slidesUrl?'<a class="btn sm dark" href="'+esc(safeLink(m.slidesUrl))+'" target="_blank" rel="noopener">Open</a>':'')+'</div><label class="f" for="mSl">Link, or upload a PDF</label><div class="row"><input id="mSl" class="input" data-field="modules.slidesUrl" data-id="'+esc(m.id)+'" value="'+esc(m.slidesUrl||'')+'" placeholder="Paste a link"><button class="btn sm press" data-act="uploadSlides" data-id="'+esc(m.id)+'">Upload</button></div></div>'+
-    '</div><div class="row between" style="margin-bottom:12px;flex-wrap:wrap"><h2 style="font-size:18px;font-weight:600">My notes</h2><button class="btn sm press'+(m.done?' dark':'')+'" data-act="modDone" data-id="'+esc(m.id)+'" aria-pressed="'+(!!m.done)+'">'+(m.done?'Module done':'Mark module done')+'</button></div>'+
-    editor('modules',m.id,'Start typing your notes for this module…')+'</div>';
+    '</div><div class="row" style="margin:30px 0 12px;gap:10px;flex-wrap:wrap;padding-top:22px;border-top:1px solid var(--line);align-items:flex-end"><div style="flex:1;min-width:200px"><div class="muted" style="font-size:12px;font-weight:600;margin-bottom:2px">Page '+(pi+1)+' of '+pgs.length+'</div><label for="pTitle" style="position:absolute;left:-9999px">Page name</label><input id="pTitle" class="title-in" data-field="pages.title" data-id="'+esc(pg.id)+'" value="'+esc(pg.title)+'" placeholder="Name this page" style="font-size:22px;font-weight:600"></div>'+fmtBtn()+(pgs.length>1?'<button class="btn sm ghost press" data-act="delPage" data-id="'+esc(pg.id)+'" style="color:var(--muted)">Delete page</button>':'')+'</div>'+
+    editor('pages',pg.id,'Start typing your notes…',true)+'</div>';
   }else h+='<div style="padding:40px"><div class="empty">Add a module to start taking notes.</div></div>';
   return h+'</section></div></main>';
 }
@@ -402,12 +421,17 @@ app.addEventListener('click',function(e){if(e.target.closest('[data-act]')&&!e.t
   var b=e.target.closest('[data-act],[data-cmd]');if(!b)return;
   if(b.dataset.cmd){e.preventDefault();return runCmd(b)}
   var a=b.dataset.act,id=b.dataset.id,t;
-  if(a==='theme'){ui.dark=!ui.dark;document.body.classList.toggle('dark',ui.dark);saveUi();render()}
+  if(a==='fmt'){ui.fmt=!ui.fmt;saveUi();document.body.classList.toggle('fmt',ui.fmt);document.querySelectorAll('.fmt-btn').forEach(function(x){x.setAttribute('aria-pressed',ui.fmt);x.lastChild.textContent=ui.fmt?'Hide formatting':'Formatting'})}
+  else if(a==='theme'){ui.dark=!ui.dark;document.body.classList.toggle('dark',ui.dark);saveUi();render()}
   else if(a==='todo'){t=find('todos',id);patch('todos',id,{done:!t.done});render()}
   else if(a==='delTodo')remove('todos',id);
-  else if(a==='openModule'){var m=find('modules',id);ui.courseId=m.courseId;ui.moduleId=id;saveUi();go('courses')}
+  else if(a==='openModule'){var m=find('modules',id);ui.courseId=m.courseId;ui.moduleId=id;ui.pageId=null;saveUi();go('courses')}
+  else if(a==='openPage'){var q=find('pages',id),mm=q&&find('modules',q.moduleId);if(mm){ui.courseId=mm.courseId;ui.moduleId=mm.id;ui.pageId=id;saveUi();go('courses')}}
   else if(a==='pickCourse'){ui.courseId=id;ui.moduleId=null;saveUi();render()}
-  else if(a==='pickModule'){ui.moduleId=id;saveUi();render()}
+  else if(a==='pickModule'){ui.moduleId=id;ui.pageId=null;saveUi();render()}
+  else if(a==='pickPage'){ui.pageId=id;saveUi();render()}
+  else if(a==='addPage'){var np=modPages(id).length;ui.pageId=create('pages',{moduleId:id,order:np+1,title:'New page',notesHtml:''});saveUi();render();setTimeout(function(){var t=document.getElementById('pTitle');if(t){t.focus();t.select()}},60)}
+  else if(a==='delPage'){t=find('pages',id);if(confirm('Delete the page "'+(t.title||'Untitled page')+'" and its notes? This can\'t be undone.')){ui.pageId=null;saveUi();remove('pages',id)}}
   else if(a==='modDone'){t=find('modules',id);patch('modules',id,{done:!t.done});render()}
   else if(a==='addModule'){var n=courseMods(id).length;var nid=create('modules',{courseId:id,order:n+1,title:'Module '+(n+1),done:false});ui.moduleId=nid;saveUi();render()}
   else if(a==='uploadSlides')pickFile('application/pdf,image/*,.ppt,.pptx',function(f){upload(f).then(function(u){patch('modules',id,{slidesUrl:u});render()})});
@@ -451,6 +475,7 @@ app.addEventListener('input',function(e){
   if(fld==='day.title'){var t=curTrip(),i=+el.dataset.i;debounce('day'+i,function(){var days=tripDays(t).map(function(d){return{title:d.title||'',items:(d.items||[]).slice()}});days[i].title=el.value;patch('trips',t.id,{days:days})},800);return}
   var p=fld.split('.'),col=p[0],key=p[1],id=el.dataset.id;debounce(fld+id,function(){var o={};o[key]=el.value.trim();patch(col,id,o)},800);
 });
+app.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('title-in')){e.preventDefault();e.target.blur()}});
 app.addEventListener('focusout',function(e){if(e.target.closest&&(e.target.closest('[data-editor]')||e.target.dataset.field))flush();setTimeout(function(){if(dirtyWhileEditing&&!editing()){dirtyWhileEditing=false;render()}},50)});
 function saveEditor(ed){var cl=ed.cloneNode(true);cl.querySelectorAll('img[data-sb]').forEach(function(im){im.setAttribute('src',im.getAttribute('data-sb'));im.removeAttribute('data-sb')});var html=sanitize(cl.innerHTML);if(!ed.textContent.replace(/\u200b/g,'').trim()&&!ed.querySelector('img'))html='';if(html.length>240000){toast('This note is getting very long. Start a new one soon.')}patch(ed.dataset.editor,ed.dataset.id,{notesHtml:html,updated:Date.now()})}
 
@@ -497,7 +522,7 @@ function linkForm(ed){var r=saveRange();modal('<h2 class="h2" style="font-size:2
 /* ---------- export ---------- */
 function exportAll(){
   var out='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Notes export</title><style>body{font-family:Georgia,serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.6}h1{font-size:32px}h2{margin-top:40px}h3{margin-top:28px}.callout{background:#EEF1E6;padding:12px;border-radius:8px}img{max-width:100%}</style></head><body><h1>Notes export, '+new Date().toLocaleDateString('en-GB')+'</h1>';
-  S.courses.slice().sort(byOrder).forEach(function(c){out+='<h2>'+esc(c.title)+'</h2>';courseMods(c.id).forEach(function(m){out+='<h3>'+esc(m.title)+(m.done?' (done)':'')+'</h3>'+(m.lectureUrl?'<p>Lecture: '+esc(m.lectureUrl)+'</p>':'')+(m.slidesUrl?'<p>Slides: '+esc(m.slidesUrl)+'</p>':'')+(sanitize(m.notesHtml)||'<p><i>No notes</i></p>')})});
+  S.courses.slice().sort(byOrder).forEach(function(c){out+='<h2>'+esc(c.title)+'</h2>';courseMods(c.id).forEach(function(m){out+='<h3>'+esc(m.title)+(m.done?' (done)':'')+'</h3>'+(m.lectureUrl?'<p>Lecture: '+esc(m.lectureUrl)+'</p>':'')+(m.slidesUrl?'<p>Slides: '+esc(m.slidesUrl)+'</p>':'')+(modPages(m.id).length?modPages(m.id).map(function(q){return '<h4>'+esc(q.title||'Untitled page')+'</h4>'+(sanitize(q.notesHtml)||'<p><i>No notes</i></p>')}).join(''):(sanitize(m.notesHtml)||'<p><i>No notes</i></p>'))})});
   out+='<h2>Interests</h2>';S.topics.forEach(function(t){out+='<h3>'+esc(t.name)+'</h3>'+(sanitize(t.notesHtml)||'')});
   out+='<h2>Trips</h2>';S.trips.forEach(function(t){out+='<h3>'+esc(t.name)+'</h3>'+(sanitize(t.notesHtml)||'')+((t.bookings||[]).length?'<ul>'+t.bookings.map(function(b){return '<li>'+esc(b.kind+': '+b.title+' '+(b.detail||'')+' '+(b.ref||''))+'</li>'}).join('')+'</ul>':'')});
   out+='</body></html>';
@@ -506,10 +531,10 @@ function exportAll(){
   toast('Downloaded your notes and a full backup');
 }
 function dl(name,data,type){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1000)}
-function importBackup(){var f=document.getElementById('importPick');f.value='';f.onchange=function(){var file=f.files[0];if(!file)return;file.text().then(function(t){var d=JSON.parse(t);var cols=['todos','courses','modules','trips','topics'];var rows=[];if(d.settings)rows.push({user_id:user.id,col:'settings',id:'main',data:d.settings});cols.forEach(function(c){(d[c]||[]).forEach(function(x){var b=Object.assign({},x);delete b.id;rows.push({user_id:user.id,col:c,id:x.id,data:b})})});return sb.from('docs').upsert(rows)}).then(function(r){if(r&&r.error)throw r.error;toast('Backup restored');loadAll()}).catch(function(){toast('That file isn\'t a dashboard backup.')})};f.click()}
+function importBackup(){var f=document.getElementById('importPick');f.value='';f.onchange=function(){var file=f.files[0];if(!file)return;file.text().then(function(t){var d=JSON.parse(t);var cols=['todos','courses','modules','pages','trips','topics'];var rows=[];if(d.settings)rows.push({user_id:user.id,col:'settings',id:'main',data:d.settings});cols.forEach(function(c){(d[c]||[]).forEach(function(x){var b=Object.assign({},x);delete b.id;rows.push({user_id:user.id,col:c,id:x.id,data:b})})});return sb.from('docs').upsert(rows)}).then(function(r){if(r&&r.error)throw r.error;toast('Backup restored');loadAll()}).catch(function(){toast('That file isn\'t a dashboard backup.')})};f.click()}
 
 /* ---------- data ---------- */
-var COLS=['todos','courses','modules','trips','topics'];
+var COLS=['todos','courses','modules','pages','trips','topics'];
 var SEED=(function(){
   var C=[['c1','Course 1: Beginning Cosmetic Chemistry','Beginning Cosmetic Chemistry','img/dna.jpg'],['c2','Course 2: Fundamentals of Skin Science','Fundamentals of Skin Science',''],['c3','Course 3: Cosmetic Formulations (Online)','Cosmetic Formulations',''],['c4','Elective: Advanced Skin Science','Advanced Skin Science',''],['c5','Elective: Cosmetic Product Development, Skin Care','Product Development: Skin Care',''],['c6','Elective: Fundamentals of Microbiome for the Cosmetics Industry','Microbiome for Cosmetics','img/leaves.jpg']];
   var rows=[{col:'settings',id:'main',data:{programName:'Skin Care Science 2026–2027',playlistName:'Evening mix',artists:'Boy In Space, Shy Martin, Chelsea Cutler, Noah Kahan, Asiris',playlistUrl:'',musicImage:'img/pianowin.jpg',defaultTrip:'img/seine.jpg'}}];
@@ -546,7 +571,7 @@ function loadAll(){
   return sb.from('docs').select('col,id,data').limit(5000).then(function(r){
     if(r.error){app.innerHTML='<div class="wrap" style="padding-top:80px"><p class="muted">Couldn\'t load your data: '+esc(r.error.message)+'. Check the setup script ran, then refresh.</p></div>';return}
     if(!r.data.length){return sb.from('docs').upsert(SEED.map(function(x){return{user_id:user.id,col:x.col,id:x.id,data:x.data}})).then(function(r2){if(r2.error){toast('Setup failed: '+r2.error.message);return}return loadAll()})}
-    var N={settings:{},todos:[],courses:[],modules:[],trips:[],topics:[]};
+    var N={settings:{},todos:[],courses:[],modules:[],pages:[],trips:[],topics:[]};
     r.data.forEach(function(row){if(row.col==='settings')N.settings=row.data||{};else if(N[row.col])N[row.col].push(Object.assign({id:row.id},row.data))});
     S=N;loaded.courses=1;scanRefs();
     if(!started){started=true;var at=activeTrip();if(at&&!location.hash&&window.innerWidth<700){ui.tmId=at.id;location.hash='tripmode';return}}
