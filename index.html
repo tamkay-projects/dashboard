@@ -76,7 +76,9 @@ main.page{padding:32px 0 80px}
 .tool:hover{background:var(--soft2)}
 .swatch{width:22px;height:22px;border-radius:50%;border:2px solid var(--card);outline:1px solid var(--line);padding:0;margin:0 2px}
 .swatch.sq{border-radius:6px}
-.toolbar{display:none;flex-wrap:wrap;align-items:center;gap:2px;padding:4px;border-radius:12px;background:var(--card);border:1px solid var(--line);position:sticky;top:78px;z-index:3;margin-bottom:14px}
+.toolbar{display:none;flex:1;flex-wrap:wrap;align-items:center;gap:2px;padding:4px;border-radius:12px;background:var(--card);border:1px solid var(--line);box-shadow:0 6px 16px rgba(36,31,26,.08)}
+.ed-bar{position:sticky;top:76px;z-index:4;display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-bottom:12px}
+.ed-bar .fmt-btn{background:var(--card);box-shadow:0 4px 12px rgba(36,31,26,.08);flex:none}
 body.fmt .toolbar{display:flex}
 .hover-btn{opacity:0;transition:opacity .2s}.cover-wrap:hover .hover-btn,.hover-btn:focus-visible{opacity:1}
 @media (hover:none){.hover-btn{opacity:1}}
@@ -330,8 +332,8 @@ function toolbar(){
   marks.map(function(c){return '<button class="swatch sq" data-cmd="hilite" data-val="'+c[1]+'" style="background:'+c[1]+'" aria-label="'+c[0]+' highlight"></button>'}).join('')+
   '<button class="tool" data-cmd="clear" aria-label="Clear formatting" style="font-size:13px">Clear</button></div>';
 }
-function fmtBtn(){return '<button type="button" class="fmt-btn press" data-act="fmt" aria-pressed="'+(!!ui.fmt)+'" title="Show or hide the formatting bar"><span class="serif" style="font-size:15px">Aa</span>'+(ui.fmt?'Hide formatting':'Formatting')+'</button>'}
-function editor(col,id,ph,noHead){return (noHead?'':'<div class="ed-head"><button type="button" class="fmt-btn press" data-act="fmt" aria-pressed="'+(!!ui.fmt)+'" title="Show or hide the formatting bar"><span class="serif" style="font-size:15px">Aa</span>'+(ui.fmt?'Hide formatting':'Formatting')+'</button></div>')+toolbar()+'<div class="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Notes" data-editor="'+col+'" data-id="'+esc(id)+'" data-ph="'+esc(ph)+'"></div>'}
+function fmtBtn(){return '<button type="button" class="fmt-btn press" data-act="fmt" aria-pressed="'+(!!ui.fmt)+'" title="Show or hide the formatting bar"><span class="serif" style="font-size:15px">Aa</span>'+(ui.fmt?'Hide':'Formatting')+'</button>'}
+function editor(col,id,ph){return '<div class="ed-bar">'+toolbar()+fmtBtn()+'</div><div class="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Notes" data-editor="'+col+'" data-id="'+esc(id)+'" data-ph="'+esc(ph)+'"></div>'}
 
 function viewCourses(){
   var cs=S.courses.slice().sort(byOrder);
@@ -346,16 +348,16 @@ function viewCourses(){
   ms.map(function(x,i){var on=x.id===mid,xp=modPages(x.id),n=xp.length||1;var r='<button class="mod press'+(on?' on':'')+'" data-act="pickModule" data-id="'+esc(x.id)+'"><span class="box'+(x.done?' on':'')+'" style="width:18px;height:18px">'+(x.done?I.tick:'')+'</span><span style="flex:1;min-width:0;font-size:14px">'+esc(x.title||'Untitled module')+'</span><span class="muted" style="font-size:12px">'+n+(n===1?' page':' pages')+'</span></button>';
     if(on)r+='<div class="pg-list">'+pgs.map(function(q){return '<button class="pg press'+(q.id===pid?' on':'')+'" data-act="pickPage" data-id="'+esc(q.id)+'">'+I.page+'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(q.title||'Untitled page')+'</span></button>'}).join('')+'<button class="pg press" data-act="addPage" data-id="'+esc(x.id)+'" style="color:var(--muted)">+ New page</button></div>';
     return r}).join('')+'</div></div></aside>');
-  h+='<section class="card fade" style="flex:999 1 560px;min-width:0;padding:0;overflow:hidden">';
+  h+='<section class="card fade" style="flex:999 1 560px;min-width:0;padding:0">';
   if(m){
-    h+='<div class="cover-wrap" style="position:relative;height:180px;background:var(--soft2);overflow:hidden">'+img(c.cover,'','width:100%;height:100%;object-fit:cover')+'<button class="btn sm press" data-act="toggleSide" aria-pressed="'+(!ui.sideHidden)+'" style="position:absolute;left:16px;top:16px;background:rgba(255,246,236,.92);color:#241F1A;border:none;gap:7px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg>'+(ui.sideHidden?'Show sidebar':'Hide sidebar')+'</button><button class="btn sm press hover-btn" data-act="courseCover" data-id="'+esc(cid)+'" style="position:absolute;right:16px;bottom:16px;background:rgba(255,246,236,.92);color:#241F1A;border:none">Change cover</button></div>'+
+    h+='<div class="cover-wrap" style="position:relative;height:180px;background:var(--soft2);overflow:hidden;border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0">'+img(c.cover,'','width:100%;height:100%;object-fit:cover')+'<button class="btn sm press" data-act="toggleSide" aria-pressed="'+(!ui.sideHidden)+'" style="position:absolute;left:16px;top:16px;background:rgba(255,246,236,.92);color:#241F1A;border:none;gap:7px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg>'+(ui.sideHidden?'Show sidebar':'Hide sidebar')+'</button><button class="btn sm press hover-btn" data-act="courseCover" data-id="'+esc(cid)+'" style="position:absolute;right:16px;bottom:16px;background:rgba(255,246,236,.92);color:#241F1A;border:none">Change cover</button></div>'+
     '<div style="padding:32px clamp(24px,4vw,48px) 48px;max-width:'+(ui.sideHidden?'1040px':'880px')+';margin:0 auto"><p class="muted" style="margin:0 0 6px;font-size:13px">'+esc(c.title)+'</p>'+
     '<label for="mTitle" style="position:absolute;left:-9999px">Module name</label><input id="mTitle" class="serif title-in" data-field="modules.title" data-id="'+esc(m.id)+'" value="'+esc(m.title)+'" placeholder="Name this module" title="Click to rename" style="font-size:clamp(28px,4vw,40px);font-weight:400;margin-bottom:6px"><div class="row" style="margin:0 0 22px;gap:12px;flex-wrap:wrap"><p class="muted" style="margin:0;flex:1;font-size:13px">Click the title to rename this module.</p><button class="btn sm press'+(m.done?' done-on':'')+'" data-act="modDone" data-id="'+esc(m.id)+'" aria-pressed="'+(!!m.done)+'">'+(m.done?'Module done':'Mark module done')+'</button></div>'+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">'+
      '<div style="background:var(--soft);border-radius:14px;padding:14px"><div class="row between"><span style="font-weight:600;font-size:14px">Lecture</span>'+(m.lectureUrl?'<a class="btn sm dark" href="'+esc(safeUrl(m.lectureUrl))+'" target="_blank" rel="noopener">Open</a>':'')+'</div><label class="f" for="mLec">Link to the lecture</label><input id="mLec" class="input" data-field="modules.lectureUrl" data-id="'+esc(m.id)+'" value="'+esc(m.lectureUrl||'')+'" placeholder="Paste the lecture link"></div>'+
      '<div style="background:var(--soft);border-radius:14px;padding:14px"><div class="row between"><span style="font-weight:600;font-size:14px">Slides</span>'+(m.slidesUrl?'<a class="btn sm dark" href="'+esc(safeLink(m.slidesUrl))+'" target="_blank" rel="noopener">Open</a>':'')+'</div><label class="f" for="mSl">Link, or upload a PDF</label><div class="row"><input id="mSl" class="input" data-field="modules.slidesUrl" data-id="'+esc(m.id)+'" value="'+esc(m.slidesUrl||'')+'" placeholder="Paste a link"><button class="btn sm press" data-act="uploadSlides" data-id="'+esc(m.id)+'">Upload</button></div></div>'+
-    '</div><div class="row" style="margin:30px 0 12px;gap:10px;flex-wrap:wrap;padding-top:22px;border-top:1px solid var(--line);align-items:flex-end"><div style="flex:1;min-width:200px"><div class="muted" style="font-size:12px;font-weight:600;margin-bottom:2px">Page '+(pi+1)+' of '+pgs.length+'</div><label for="pTitle" style="position:absolute;left:-9999px">Page name</label><input id="pTitle" class="title-in" data-field="pages.title" data-id="'+esc(pg.id)+'" value="'+esc(pg.title)+'" placeholder="Name this page" style="font-size:22px;font-weight:600"></div>'+fmtBtn()+(pgs.length>1?'<button class="btn sm ghost press" data-act="delPage" data-id="'+esc(pg.id)+'" style="color:var(--muted)">Delete page</button>':'')+'</div>'+
-    editor('pages',pg.id,'Start typing your notes…',true)+'</div>';
+    '</div><div class="row" style="margin:30px 0 12px;gap:10px;flex-wrap:wrap;padding-top:22px;border-top:1px solid var(--line);align-items:flex-end"><div style="flex:1;min-width:200px"><div class="muted" style="font-size:12px;font-weight:600;margin-bottom:2px">Page '+(pi+1)+' of '+pgs.length+'</div><label for="pTitle" style="position:absolute;left:-9999px">Page name</label><input id="pTitle" class="title-in" data-field="pages.title" data-id="'+esc(pg.id)+'" value="'+esc(pg.title)+'" placeholder="Name this page" style="font-size:22px;font-weight:600"></div>'+(pgs.length>1?'<button class="btn sm ghost press" data-act="delPage" data-id="'+esc(pg.id)+'" style="color:var(--muted)">Delete page</button>':'')+'</div>'+
+    editor('pages',pg.id,'Start typing your notes…')+'</div>';
   }else h+='<div style="padding:40px"><div class="empty">Add a module to start taking notes.</div></div>';
   return h+'</section></div></main>';
 }
@@ -450,7 +452,7 @@ app.addEventListener('click',function(e){if(e.target.closest('[data-act]')&&!e.t
   var b=e.target.closest('[data-act],[data-cmd]');if(!b)return;
   if(b.dataset.cmd){e.preventDefault();return runCmd(b)}
   var a=b.dataset.act,id=b.dataset.id,t;
-  if(a==='fmt'){ui.fmt=!ui.fmt;saveUi();document.body.classList.toggle('fmt',ui.fmt);document.querySelectorAll('.fmt-btn').forEach(function(x){x.setAttribute('aria-pressed',ui.fmt);x.lastChild.textContent=ui.fmt?'Hide formatting':'Formatting'})}
+  if(a==='fmt'){ui.fmt=!ui.fmt;saveUi();document.body.classList.toggle('fmt',ui.fmt);document.querySelectorAll('.fmt-btn').forEach(function(x){x.setAttribute('aria-pressed',ui.fmt);x.lastChild.textContent=ui.fmt?'Hide':'Formatting'})}
   else if(a==='theme'){ui.dark=!ui.dark;document.body.classList.toggle('dark',ui.dark);saveUi();render()}
   else if(a==='todo'){t=find('todos',id);patch('todos',id,{done:!t.done});render()}
   else if(a==='delTodo')remove('todos',id);
@@ -504,6 +506,14 @@ app.addEventListener('input',function(e){
   var fld=el.dataset.field;if(!fld)return;
   if(fld==='day.title'){var t=curTrip(),i=+el.dataset.i;debounce('day'+i,function(){var days=tripDays(t).map(function(d){return{title:d.title||'',items:(d.items||[]).slice()}});days[i].title=el.value;patch('trips',t.id,{days:days})},800);return}
   var p=fld.split('.'),col=p[0],key=p[1],id=el.dataset.id;debounce(fld+id,function(){var o={};o[key]=el.value.trim();patch(col,id,o)},800);
+});
+app.addEventListener('paste',function(e){
+  var ed=e.target.closest&&e.target.closest('[data-editor]');if(!ed||!e.clipboardData)return;
+  var cd=e.clipboardData,files=Array.prototype.slice.call(cd.files||[]).filter(function(f){return /^image\//.test(f.type)});
+  if(files.length){e.preventDefault();var range=saveRange();files.reduce(function(pr,f){return pr.then(function(){return upload(f).then(function(u){restoreRange(range);ed.focus();document.execCommand('insertHTML',false,'<img src="'+esc(rs(u))+'" data-sb="'+esc(u)+'" alt=""><p><br></p>');range=saveRange()})})},Promise.resolve()).then(function(){saveEditor(ed)},function(){toast('That image could not be pasted. Try the image button.')});return}
+  var html=cd.getData('text/html');
+  if(html){e.preventDefault();html=html.replace(/<h1/gi,'<h2').replace(/<\/h1>/gi,'</h2>').replace(/<h[4-6]/gi,'<h3').replace(/<\/h[4-6]>/gi,'</h3>');var clean=sanitize(html).replace(/ style="[^"]*"/g,'').replace(/<img(?![^>]*src="(sb:|img\/|https:))[^>]*>/gi,'');document.execCommand('insertHTML',false,clean);return}
+  var tx=cd.getData('text/plain');if(tx){e.preventDefault();document.execCommand('insertText',false,tx)}
 });
 app.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('title-in')){e.preventDefault();e.target.blur()}});
 app.addEventListener('focusout',function(e){if(e.target.closest&&(e.target.closest('[data-editor]')||e.target.dataset.field))flush();setTimeout(function(){if(dirtyWhileEditing&&!editing()){dirtyWhileEditing=false;render()}},50)});
