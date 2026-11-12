@@ -84,7 +84,14 @@ body.fmt .toolbar{display:flex}
 @media (hover:none){.hover-btn{opacity:1}}
 .pg-list{margin:2px 0 8px 21px;padding-left:12px;border-left:1.5px solid var(--line);display:flex;flex-direction:column;gap:1px}
 .pg{display:flex;align-items:center;gap:8px;text-align:left;padding:7px 10px;border-radius:10px;border:none;background:transparent;color:var(--muted);font-size:13.5px;width:100%}
-.pg:hover{background:var(--soft)}.pg.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--line)}
+.pg:hover{background:var(--soft)}.pg.on{background:transparent;color:var(--ink);font-weight:600}
+.pgrow{display:flex;align-items:center;gap:2px;border-radius:10px;padding-left:2px;position:relative}
+.pgrow.on{background:var(--card);box-shadow:0 0 0 1px var(--line)}
+.pgrow .pg{flex:1;min-width:0;padding-left:4px}
+.grip{color:var(--muted);opacity:0;cursor:grab;display:flex;padding:0 2px;transition:opacity .2s}.pgrow:hover .grip,.pgrow.on .grip{opacity:1}
+@media (hover:none){.grip{opacity:.6}}
+.pgrow.dragging{opacity:.4}.pgrow.drop-before:before,.pgrow.drop-after:after{content:"";position:absolute;left:6px;right:6px;height:2px;background:var(--clay);border-radius:2px}.pgrow.drop-before:before{top:-2px}.pgrow.drop-after:after{bottom:-2px}
+.mv{display:flex;gap:2px;padding-right:4px}.mv button{width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0}.mv button:disabled{opacity:.35;cursor:default}
 .btn.done-on{background:var(--olive);border-color:var(--olive);color:#FFF6EC}
 .ed-head{display:flex;justify-content:flex-end;margin-bottom:8px}
 .fmt-btn{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:13px;display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
@@ -188,7 +195,7 @@ function sanitize(html){
     if(c.nodeType!==1||!OK_TAGS[c.tagName]){if(c.nodeType===1&&c.tagName!=='SCRIPT'&&c.tagName!=='STYLE'){walk(c);while(c.firstChild)n.insertBefore(c.firstChild,c)}c.remove();return}
     Array.prototype.slice.call(c.attributes).forEach(function(a){
       var k=a.name.toLowerCase(),v=a.value;
-      if(k==='style'){var keep=[];v.split(';').forEach(function(d){var p=d.split(':');var key=(p[0]||'').trim().toLowerCase();if((key==='color'||key==='background-color')&&p[1]&&!/url|expression/i.test(p[1]))keep.push(key+':'+p[1].trim())});keep.length?c.setAttribute('style',keep.join(';')):c.removeAttribute('style')}
+      if(k==='style'){var keep=[];v.split(';').forEach(function(d){var p=d.split(':');var key=(p[0]||'').trim().toLowerCase();var val=(p[1]||'').trim();if((key==='color'||key==='background-color')&&val&&!/url|expression/i.test(val))keep.push(key+':'+val);else if(key==='font-weight'&&/^(bold|[6-9]00)$/.test(val))keep.push('font-weight:bold');else if(key==='font-style'&&val==='italic')keep.push('font-style:italic');else if(key==='text-decoration'||key==='text-decoration-line'){if(/underline/.test(val))keep.push('text-decoration:underline')}});keep.length?c.setAttribute('style',keep.join(';')):c.removeAttribute('style')}
       else if(k==='href'){if(!/^https?:\/\//i.test(v))c.removeAttribute('href');else{c.setAttribute('target','_blank');c.setAttribute('rel','noopener')}}
       else if(k==='src'){if(!/^(sb:|img\/|https:\/\/)/.test(v))c.removeAttribute('src')}
       else if(k==='data-sb'){if(!/^sb:/.test(v))c.removeAttribute('data-sb')}
@@ -232,6 +239,12 @@ window.addEventListener('hashchange',function(){flush();render();window.scrollTo
 /* ---------- derived ---------- */
 function program(){var mods=S.modules,done=mods.filter(function(m){return m.done}).length;return{total:mods.length,done:done}}
 function courseMods(cid){return S.modules.filter(function(m){return m.courseId===cid}).sort(byOrder)}
+function reorderPages(list){list.forEach(function(q,i){if(q.order!==i+1)patch('pages',q.id,{order:i+1})});render()}
+var dragPid=null;
+document.addEventListener('dragstart',function(e){var r=e.target.closest&&e.target.closest('.pgrow');if(!r)return;dragPid=r.dataset.pid;r.classList.add('dragging');try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',dragPid)}catch(x){}});
+document.addEventListener('dragover',function(e){if(!dragPid)return;var r=e.target.closest&&e.target.closest('.pgrow');document.querySelectorAll('.drop-before,.drop-after').forEach(function(x){x.classList.remove('drop-before','drop-after')});if(!r||r.dataset.pid===dragPid)return;e.preventDefault();var bx=r.getBoundingClientRect();r.classList.add(e.clientY<bx.top+bx.height/2?'drop-before':'drop-after')});
+document.addEventListener('drop',function(e){if(!dragPid)return;var r=e.target.closest&&e.target.closest('.pgrow');if(!r||r.dataset.pid===dragPid)return;e.preventDefault();var after=r.classList.contains('drop-after'),q=find('pages',dragPid),t=find('pages',r.dataset.pid);if(!q||!t||q.moduleId!==t.moduleId)return;var list=modPages(q.moduleId).filter(function(x){return x.id!==q.id}),k=list.indexOf(t)+(after?1:0);list.splice(k,0,q);dragPid=null;reorderPages(list)});
+document.addEventListener('dragend',function(){dragPid=null;document.querySelectorAll('.dragging,.drop-before,.drop-after').forEach(function(x){x.classList.remove('dragging','drop-before','drop-after')})});
 function modPages(mid){return S.pages.filter(function(p){return p.moduleId===mid}).sort(byOrder)}
 function ensurePage(m){var ps=modPages(m.id);if(ps.length)return ps;create('pages',{moduleId:m.id,order:1,title:'Lecture notes',notesHtml:m.notesHtml||'',updated:m.updated||0});return modPages(m.id)}
 function nextModule(){var cs=S.courses.slice().sort(byOrder);for(var i=0;i<cs.length;i++){var ms=courseMods(cs[i].id);for(var j=0;j<ms.length;j++)if(!ms[j].done)return{c:cs[i],m:ms[j]}}return null}
@@ -350,7 +363,7 @@ function viewCourses(){
   cs.map(function(x){var mm=courseMods(x.id),d=mm.filter(function(k){return k.done}).length;return '<button class="side-item press'+(x.id===cid?' on':'')+'" data-act="pickCourse" data-id="'+esc(x.id)+'">'+(x.cover?img(x.cover,'','width:46px;height:46px;border-radius:12px;object-fit:cover;flex:none'):'<span style="width:46px;height:46px;border-radius:12px;background:var(--soft2);flex:none"></span>')+'<span style="flex:1;min-width:0"><span style="display:block;font-size:14px;font-weight:500;line-height:1.3">'+esc(x.short||x.title)+'</span><span class="bar" style="display:block;height:5px;margin:6px 0 3px"><span style="width:'+(mm.length?Math.round(d/mm.length*100):0)+'%"></span></span><span class="muted" style="font-size:12px">'+d+' of '+mm.length+' modules</span></span></button>'}).join('')+
   '</div></div><div><div class="row between" style="margin-bottom:8px"><h2 style="font-size:13px;font-weight:600" class="muted">Modules</h2><button class="btn sm press" data-act="addModule" data-id="'+esc(cid)+'">Add module</button></div><div style="display:flex;flex-direction:column;gap:2px">'+
   ms.map(function(x,i){var on=x.id===mid,xp=modPages(x.id),n=xp.length||1;var r='<button class="mod press'+(on?' on':'')+'" data-act="pickModule" data-id="'+esc(x.id)+'"><span class="box'+(x.done?' on':'')+'" style="width:18px;height:18px">'+(x.done?I.tick:'')+'</span><span style="flex:1;min-width:0;font-size:14px">'+esc(x.title||'Untitled module')+'</span><span class="muted" style="font-size:12px">'+n+(n===1?' page':' pages')+'</span></button>';
-    if(on)r+='<div class="pg-list">'+pgs.map(function(q){return '<button class="pg press'+(q.id===pid?' on':'')+'" data-act="pickPage" data-id="'+esc(q.id)+'">'+I.page+'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(q.title||'Untitled page')+'</span></button>'}).join('')+'<button class="pg press" data-act="addPage" data-id="'+esc(x.id)+'" style="color:var(--muted)">+ New page</button></div>';
+    if(on)r+='<div class="pg-list">'+pgs.map(function(q,qi){var act=q.id===pid;return '<div class="pgrow'+(act?' on':'')+'" draggable="true" data-pid="'+esc(q.id)+'"><span class="grip" aria-hidden="true" title="Drag to reorder"><svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor"><circle cx="2" cy="2" r="1.3"/><circle cx="8" cy="2" r="1.3"/><circle cx="2" cy="7" r="1.3"/><circle cx="8" cy="7" r="1.3"/><circle cx="2" cy="12" r="1.3"/><circle cx="8" cy="12" r="1.3"/></svg></span><button class="pg press'+(act?' on':'')+'" data-act="pickPage" data-id="'+esc(q.id)+'">'+I.page+'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(q.title||'Untitled page')+'</span></button>'+(act&&pgs.length>1?'<span class="mv"><button class="press" data-act="movePage" data-id="'+esc(q.id)+'" data-dir="-1" aria-label="Move page up"'+(qi===0?' disabled':'')+'><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button><button class="press" data-act="movePage" data-id="'+esc(q.id)+'" data-dir="1" aria-label="Move page down"'+(qi===pgs.length-1?' disabled':'')+'><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button></span>':'')+'</div>'}).join('')+'<button class="pg press" data-act="addPage" data-id="'+esc(x.id)+'" style="color:var(--muted)">+ New page</button></div>';
     return r}).join('')+'</div></div></aside>');
   h+='<section class="card fade" style="flex:999 1 560px;min-width:0;padding:0">';
   if(m){
@@ -465,6 +478,7 @@ app.addEventListener('click',function(e){if(e.target.closest('[data-act]')&&!e.t
   else if(a==='pickCourse'){ui.courseId=id;ui.moduleId=null;saveUi();render()}
   else if(a==='pickModule'){ui.moduleId=id;ui.pageId=null;saveUi();render()}
   else if(a==='toggleSide'){ui.sideHidden=!ui.sideHidden;saveUi();render()}
+  else if(a==='movePage'){var q=find('pages',id),list=modPages(q.moduleId),i=list.indexOf(q),k=i+(+b.dataset.dir);if(k>=0&&k<list.length){list.splice(i,1);list.splice(k,0,q);reorderPages(list)}}
   else if(a==='pickPage'){ui.pageId=id;saveUi();render()}
   else if(a==='addPage'){var np=modPages(id).length;ui.pageId=create('pages',{moduleId:id,order:np+1,title:'New page',notesHtml:''});saveUi();render();setTimeout(function(){var t=document.getElementById('pTitle');if(t){t.focus();t.select()}},60)}
   else if(a==='delPage'){t=find('pages',id);if(confirm('Delete the page "'+(t.title||'Untitled page')+'" and its notes? This can\'t be undone.')){ui.pageId=null;saveUi();remove('pages',id)}}
@@ -519,6 +533,9 @@ app.addEventListener('paste',function(e){
   if(html){e.preventDefault();html=html.replace(/<h1/gi,'<h2').replace(/<\/h1>/gi,'</h2>').replace(/<h[4-6]/gi,'<h3').replace(/<\/h[4-6]>/gi,'</h3>');var clean=sanitize(html).replace(/ style="[^"]*"/g,'').replace(/<img(?![^>]*src="(sb:|img\/|https:))[^>]*>/gi,'');document.execCommand('insertHTML',false,clean);return}
   var tx=cd.getData('text/plain');if(tx){e.preventDefault();document.execCommand('insertText',false,tx)}
 });
+app.addEventListener('keydown',function(e){var ed=e.target.closest&&e.target.closest('[data-editor]');if(!ed||!(e.metaKey||e.ctrlKey)||e.altKey)return;var k=e.key.toLowerCase(),cmd=null;
+  if(!e.shiftKey&&k==='b')cmd='bold';else if(!e.shiftKey&&k==='i')cmd='italic';else if(!e.shiftKey&&k==='u')cmd='underline';else if(!e.shiftKey&&k==='k')cmd='link';else if(e.shiftKey&&(k==='8'||k==='*'))cmd='ul';else if(e.shiftKey&&k==='h')cmd='h2';
+  if(!cmd)return;e.preventDefault();e.stopPropagation();runCmd({dataset:{cmd:cmd}})});
 app.addEventListener('keydown',function(e){if(e.key==='Tab'){var ed=e.target.closest&&e.target.closest('[data-editor]');if(ed){var li=curLi(ed);if(li){e.preventDefault();if(e.shiftKey?outdentLi(li):indentLi(li))saveEditor(ed)}}}});
 app.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('title-in')){e.preventDefault();e.target.blur()}});
 app.addEventListener('focusout',function(e){if(e.target.closest&&(e.target.closest('[data-editor]')||e.target.dataset.field))flush();setTimeout(function(){if(dirtyWhileEditing&&!editing()){dirtyWhileEditing=false;render()}},50)});
@@ -532,7 +549,7 @@ function indentLi(li){var prev=li.previousElementSibling;if(!prev)return false;v
 function outdentLi(li){var list=li.parentNode,parentLi=list.parentNode;if(!parentLi||parentLi.tagName!=='LI')return false;var r=caretGet();var after=[];var n=li.nextElementSibling;while(n){after.push(n);n=n.nextElementSibling}if(after.length){var sub=document.createElement(list.tagName);if(list.className)sub.className=list.className;after.forEach(function(x){sub.appendChild(x)});li.appendChild(sub)}parentLi.parentNode.insertBefore(li,parentLi.nextSibling);if(!list.children.length)list.remove();caretSet(r);return true}
 function runCmd(b){
   var ed=app.querySelector('.editor');if(!ed)return;ed.focus();var c=b.dataset.cmd,v=b.dataset.val;
-  try{document.execCommand('styleWithCSS',false,true)}catch(e){}
+  try{document.execCommand('styleWithCSS',false,c==='color'||c==='hilite')}catch(e){}
   if(c==='bold'||c==='italic'||c==='underline')document.execCommand(c);
   else if(c==='h2'){var blk=document.queryCommandValue('formatBlock');document.execCommand('formatBlock',false,/h2/i.test(blk)?'P':'H2')}
   else if(c==='ul')document.execCommand('insertUnorderedList');
