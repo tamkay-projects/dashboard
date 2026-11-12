@@ -100,7 +100,9 @@ body.fmt .fmt-btn{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .editor p{margin:0 0 12px}
 .editor img{max-width:100%;border-radius:12px;display:block;margin:12px 0}
 .editor .callout{background:var(--callout);border-radius:12px;padding:14px 16px;margin:12px 0;font-family:'DM Sans',sans-serif;font-size:15px}
+.editor ul ul{list-style-type:circle;margin:4px 0}.editor ul ul ul{list-style-type:square}.editor li>ul{padding-left:24px}
 .editor ul.checklist{list-style:none;padding-left:0}
+.editor ul.checklist ul.checklist{padding-left:24px}
 .editor ul.checklist li{position:relative;padding-left:30px;font-family:'DM Sans',sans-serif;font-size:16px;margin:6px 0}
 .editor ul.checklist li:before{content:"";position:absolute;left:0;top:4px;width:18px;height:18px;border-radius:5px;border:1.5px solid var(--muted);cursor:pointer}
 .editor ul.checklist li[data-checked="true"]{text-decoration:line-through;opacity:.55}
@@ -324,6 +326,8 @@ function toolbar(){
   return '<div class="toolbar" role="toolbar" aria-label="Formatting">'+
   '<button class="tool serif" style="font-size:18px" data-cmd="h2" aria-label="Heading">H</button><button class="tool" style="font-weight:700" data-cmd="bold" aria-label="Bold">B</button><button class="tool serif" style="font-style:italic;font-size:17px" data-cmd="italic" aria-label="Italic">I</button><button class="tool" style="text-decoration:underline" data-cmd="underline" aria-label="Underline">U</button><span class="sep"></span>'+
   '<button class="tool" data-cmd="ul" aria-label="Bulleted list"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></button>'+
+  '<button class="tool" data-cmd="indent" aria-label="Indent (sub-bullet)" title="Sub-bullet (Tab)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 6h10M11 12h10M11 18h10M3 9l3 3-3 3"/></svg></button>'+
+  '<button class="tool" data-cmd="outdent" aria-label="Outdent" title="Move bullet back (Shift+Tab)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 6h10M11 12h10M11 18h10M7 9l-3 3 3 3"/></svg></button>'+
   '<button class="tool" data-cmd="check" aria-label="Checklist"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="6" height="6" rx="1"/><path d="m4.5 7 1 1 2-2M13 7h8"/><rect x="3" y="14" width="6" height="6" rx="1"/><path d="M13 17h8"/></svg></button>'+
   '<button class="tool" data-cmd="callout" aria-label="Callout box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 10h6M7 14h10"/></svg></button>'+
   '<button class="tool" data-cmd="link" aria-label="Add link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>'+
@@ -515,17 +519,24 @@ app.addEventListener('paste',function(e){
   if(html){e.preventDefault();html=html.replace(/<h1/gi,'<h2').replace(/<\/h1>/gi,'</h2>').replace(/<h[4-6]/gi,'<h3').replace(/<\/h[4-6]>/gi,'</h3>');var clean=sanitize(html).replace(/ style="[^"]*"/g,'').replace(/<img(?![^>]*src="(sb:|img\/|https:))[^>]*>/gi,'');document.execCommand('insertHTML',false,clean);return}
   var tx=cd.getData('text/plain');if(tx){e.preventDefault();document.execCommand('insertText',false,tx)}
 });
+app.addEventListener('keydown',function(e){if(e.key==='Tab'){var ed=e.target.closest&&e.target.closest('[data-editor]');if(ed){var li=curLi(ed);if(li){e.preventDefault();if(e.shiftKey?outdentLi(li):indentLi(li))saveEditor(ed)}}}});
 app.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('title-in')){e.preventDefault();e.target.blur()}});
 app.addEventListener('focusout',function(e){if(e.target.closest&&(e.target.closest('[data-editor]')||e.target.dataset.field))flush();setTimeout(function(){if(dirtyWhileEditing&&!editing()){dirtyWhileEditing=false;render()}},50)});
 function saveEditor(ed){var cl=ed.cloneNode(true);cl.querySelectorAll('img[data-sb]').forEach(function(im){im.setAttribute('src',im.getAttribute('data-sb'));im.removeAttribute('data-sb')});var html=sanitize(cl.innerHTML);if(!ed.textContent.replace(/\u200b/g,'').trim()&&!ed.querySelector('img'))html='';if(html.length>240000){toast('This note is getting very long. Start a new one soon.')}patch(ed.dataset.editor,ed.dataset.id,{notesHtml:html,updated:Date.now()})}
 
 /* rich text commands */
+function curLi(ed){var s=window.getSelection();if(!s.rangeCount)return null;var n=s.anchorNode;n=n&&n.nodeType===3?n.parentNode:n;var li=n&&n.closest?n.closest('li'):null;return li&&ed.contains(li)?li:null}
+function caretGet(){var s=window.getSelection();return s.rangeCount?{n:s.anchorNode,o:s.anchorOffset}:null}
+function caretSet(c){if(!c||!c.n.isConnected)return;var s=window.getSelection();try{s.collapse(c.n,Math.min(c.o,c.n.nodeType===3?c.n.length:c.n.childNodes.length))}catch(e){}}
+function indentLi(li){var prev=li.previousElementSibling;if(!prev)return false;var r=caretGet();var tag=li.parentNode.tagName,cls=li.parentNode.className;var sub=prev.lastElementChild&&/^(UL|OL)$/.test(prev.lastElementChild.tagName)?prev.lastElementChild:null;if(!sub){sub=document.createElement(tag);if(cls)sub.className=cls;prev.appendChild(sub)}sub.appendChild(li);caretSet(r);return true}
+function outdentLi(li){var list=li.parentNode,parentLi=list.parentNode;if(!parentLi||parentLi.tagName!=='LI')return false;var r=caretGet();var after=[];var n=li.nextElementSibling;while(n){after.push(n);n=n.nextElementSibling}if(after.length){var sub=document.createElement(list.tagName);if(list.className)sub.className=list.className;after.forEach(function(x){sub.appendChild(x)});li.appendChild(sub)}parentLi.parentNode.insertBefore(li,parentLi.nextSibling);if(!list.children.length)list.remove();caretSet(r);return true}
 function runCmd(b){
   var ed=app.querySelector('.editor');if(!ed)return;ed.focus();var c=b.dataset.cmd,v=b.dataset.val;
   try{document.execCommand('styleWithCSS',false,true)}catch(e){}
   if(c==='bold'||c==='italic'||c==='underline')document.execCommand(c);
   else if(c==='h2'){var blk=document.queryCommandValue('formatBlock');document.execCommand('formatBlock',false,/h2/i.test(blk)?'P':'H2')}
   else if(c==='ul')document.execCommand('insertUnorderedList');
+  else if(c==='indent'||c==='outdent'){var li=curLi(ed);if(!li){if(c==='indent'){document.execCommand('insertUnorderedList');li=curLi(ed)}if(!li)return}(c==='indent'?indentLi:outdentLi)(li)}
   else if(c==='check')document.execCommand('insertHTML',false,'<ul class="checklist"><li data-checked="false">&#8203;</li></ul>');
   else if(c==='callout'){var sel=window.getSelection().toString();document.execCommand('insertHTML',false,'<div class="callout">'+(esc(sel)||'Note')+'</div><p><br></p>')}
   else if(c==='link'){linkForm(ed);return}
