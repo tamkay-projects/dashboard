@@ -6,7 +6,7 @@
 <title>Tamara's dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,WONK@0,9..144,300..500,0;1,9..144,400,0&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#F6F0E6;--card:#FFFFFF;--soft:#FBF7F0;--soft2:#F1E8D8;--line:#ECE2D1;--ink:#241F1A;--muted:#6A5E52;--sel:#F3EADC;--dateBg:#F1DCCB;--dateInk:#7A3E24;--clay:#A65A3C;--olive:#6B7A4B;--sea:#2E5A73;--gold:#C98A3A;--callout:#EEF1E6;--hl:#F8E3BE;--shadow:0 10px 24px rgba(36,31,26,.12)}
 body.dark{--bg:#17130F;--card:#211B16;--soft:#2A231D;--soft2:#3A3129;--line:#352C25;--ink:#F3EADC;--muted:#B3A594;--sel:#2E2620;--dateBg:#3A2A22;--dateInk:#F1DCCB;--callout:#2A2A20;--hl:#5A4422;--shadow:0 10px 24px rgba(0,0,0,.35)}
@@ -17,11 +17,11 @@ a{color:inherit}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 h1,h2,h3{margin:0;font-weight:500}
-.serif{font-family:Fraunces,Georgia,serif}
+.serif{font-family:Newsreader,Georgia,serif}
 .muted{color:var(--muted)}
 .wrap{max-width:1600px;margin:0 auto;padding:0 clamp(20px,4vw,72px)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;transition:background-color .35s,border-color .35s}
-.h2{font-family:Fraunces,serif;font-weight:500;font-size:26px}
+.h2{font-family:Newsreader,serif;font-weight:500;font-size:26px}
 .row{display:flex;align-items:center;gap:10px}
 .between{justify-content:space-between}
 .grid12{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:clamp(18px,1.6vw,28px)}
@@ -51,7 +51,7 @@ nav.top{border-bottom:1px solid var(--line);position:sticky;top:0;background:var
 nav.top .wrap{display:flex;align-items:center;gap:6px;min-height:64px;flex-wrap:wrap}
 nav.top a.tab{padding:8px 14px;border-radius:999px;text-decoration:none;font-size:14px}
 nav.top a.tab.on{background:var(--ink);color:var(--bg);font-weight:500}
-.brand{font-family:Fraunces,serif;font-size:22px;margin-right:20px;text-decoration:none}
+.brand{font-family:Newsreader,serif;font-size:22px;margin-right:20px;text-decoration:none}
 .save{font-size:13px;color:var(--muted);margin-left:auto;min-width:70px;text-align:right}
 main.page{padding:32px 0 80px}
 .check{display:flex;gap:12px;align-items:center;text-align:left;padding:11px 12px;border-radius:12px;border:none;background:var(--soft);width:100%}
@@ -132,7 +132,7 @@ body.fmt .fmt-btn{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-size:14px;z-index:20;box-shadow:var(--shadow)}
 .fclock{display:flex;align-items:center;gap:10px;--tw:78px;--th:112px;--fs:84px}
 .tile{position:relative;width:var(--tw);height:var(--th);border-radius:12px;perspective:420px;box-shadow:0 10px 22px rgba(36,31,26,.18),0 2px 4px rgba(36,31,26,.12)}
-.tile .h{position:absolute;inset:0;border-radius:12px;font-family:Fraunces,Georgia,serif;font-size:var(--fs);text-align:center;line-height:var(--th);background:var(--tile);color:var(--tileInk);backface-visibility:hidden}
+.tile .h{position:absolute;inset:0;border-radius:12px;font-family:Newsreader,Georgia,serif;font-size:var(--fs);text-align:center;line-height:calc(var(--th) * 1.2);overflow:hidden;font-variant-numeric:lining-nums tabular-nums;font-feature-settings:'lnum' 1,'tnum' 1;background:var(--tile);color:var(--tileInk);backface-visibility:hidden}
 .tile .t{clip-path:inset(0 0 50% 0)}.tile .b{clip-path:inset(50% 0 0 0);background:var(--tileLow)}
 .tile .ft{transform-origin:50% 50%;z-index:2}.tile .fb{transform-origin:50% 50%;z-index:2}
 .tile.go .ft{animation:ftop .6s cubic-bezier(.4,0,.6,1) both}.tile.go .fb{animation:fbot .6s cubic-bezier(.4,0,.6,1) both}
@@ -298,7 +298,7 @@ function viewHome(){
   var sub=[];if(nt&&nt.start){var dd=daysBetween(today(),nt.start);sub.push(dd>0?esc(nt.name)+' in '+dd+' day'+(dd===1?'':'s')+'.':esc(nt.name)+' is on now.')}if(nm)sub.push(esc(nm.m.title||'Next module')+' is next.');
   var h='<main class="page"><div class="wrap">'+
   '<header id="hero" class="fade row between hero sky-'+skyPart()+'" style="flex-wrap:wrap;gap:32px;margin-bottom:28px;align-items:center">'+
-   '<div style="flex:1 1 420px;min-width:0"><p class="hsub" style="margin:0 0 14px;font-size:22px"><span class="serif hacc" style="font-style:italic;font-size:34px">'+n.toLocaleDateString('en-GB',{weekday:'long'})+'</span>, '+n.getDate()+' '+n.toLocaleDateString('en-GB',{month:'long'})+'</p>'+
+   '<div style="flex:1 1 420px;min-width:0"><p class="hsub serif" style="margin:0 0 14px;font-size:30px;font-style:italic;line-height:1.2"><span class="hacc">'+n.toLocaleDateString('en-GB',{weekday:'long'})+'</span>, '+n.getDate()+' '+n.toLocaleDateString('en-GB',{month:'long'})+'</p>'+
    '<h1 class="serif" style="font-weight:400;font-size:clamp(42px,5.5vw,72px);line-height:1.02;letter-spacing:-.5px;margin-bottom:14px">'+greeting()+', Tamara</h1><p class="hsub" style="margin:0;font-size:19px">'+(sub.join(' ')||'Nothing urgent. Enjoy it.')+'</p></div>'+
    '<div id="clk" class="fclock" role="img" aria-label="Current time">'+clockHtml()+'</div>'+
   '</header><div class="grid12">';
